@@ -18,8 +18,8 @@ public class PathViewController : MonoBehaviour
     }
 
     void Start() {
-        //world.character.RegisterPathChangedCallback(OnPathChanged);
-        //pathPreviews = new List<GameObject>();
+        world.character.RegisterPathChangedCallback(OnPathChanged);
+        pathPreviews = new List<GameObject>();
     }
 
     private void OnPathChanged(Queue<Tile> obj) {

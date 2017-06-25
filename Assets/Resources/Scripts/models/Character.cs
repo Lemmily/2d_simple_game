@@ -230,22 +230,32 @@ public class Character : IXmlSerializable{
 
         // Are we there yet?
         //if (myJob != null && currTile == myJob.tile) {
+        if (nextTile != null && currTile != null) { 
             if (myJob!= null && (Mathf.Abs(x - myJob.tile.X) <= 1 && (Mathf.Abs(y - myJob.tile.Y) <= 1))) {
                 myJob.DoWork(deltaTime);
                 path = null; // stop pathing causde its close enough
             }
-        //}
+        }
 
     }
 
+
+    public override string ToString()
+    {
+        return "Character is currently in:- " + this.currTile + this.myJob;
+    }
 
     void Update_DoMovement(float deltaTime) {
         if (currTile == destTile) {
             path = null;
             return; // We're already were we want to be.
         }
+        if (currTile == null) {
+            Debug.Log("My current tile is null??");
+            
+        }
 
-        if (nextTile == null || nextTile == currTile) {
+      if (nextTile == null || nextTile == currTile) {
             // Get the next tile from the pathfinder.
             if (path == null || path.Length() == 0) {
                 // Generate a path to our destination
@@ -262,9 +272,9 @@ public class Character : IXmlSerializable{
 
             // Grab the next waypoint from the pathing system!
             nextTile = path.Dequeue();
-
             if (nextTile == currTile) {
-                Debug.LogError("Update_DoMovement - nextTile is currTile?");
+                //we're now next to our destination "one tile over".
+                Debug.LogError("Update_DoMovement - grabbing next waypoint but nextTile is currTile?" + nextTile + "\n cur: " + currTile);
             }
         }
 

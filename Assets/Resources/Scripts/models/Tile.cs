@@ -82,16 +82,28 @@ public class Tile : IXmlSerializable{
 
     }
 
-    public override string ToString()
+    override public String ToString()
     {
-        return "Tile " + X + ", " + Y;
+
+        string message = "(" + X + "," + Y + ") isEnterable:" + IsEnterable();
+        if(this.hasFurniture()) {
+            message += "has furn:-" + this.furniture.objectType;
+        }
+        return message;
     }
+
     internal void RegisterTileChangedCallback(Action<Tile> callback) {
         cbTileTypeChanged += callback;
     }
 
     internal void UnregisterTileChangeCallback(Action<Tile> callback) {
         cbTileTypeChanged -= callback;
+    }
+
+
+    public bool hasFurniture()
+    {
+        return furniture != null;
     }
 
     public bool InstallFurniture(Furniture objInstance) {
@@ -220,4 +232,6 @@ public class Tile : IXmlSerializable{
         }
         return null;
     }
+
+
 }
