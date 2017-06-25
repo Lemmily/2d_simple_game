@@ -1,0 +1,204 @@
+fileFormatVersion: 2
+guid: 46ec70438f45fff4683ae7a269d62dbb
+timeCreated: 1470470198
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: door
+    21300002: door_openness_1
+    21300004: door_NS
+    21300006: Door 1_4
+    21300008: Door 1_5
+    21300010: Door 1_6
+    21300012: Door 1_7
+    21300014: Door 1_8
+    21300016: Door 1_9
+    21300018: Door 1_10
+    21300020: Door 1_11
+    21300022: Door 1_12
+    21300024: Door 1_13
+    21300026: Door 1_14
+    21300028: Door 1_15
+    21300030: Door 1_16
+    21300032: Door 1_17
+    21300034: Door 1_18
+    21300036: Door 1_19
+    21300038: Door 1_20
+    21300040: Door 1_21
+    21300042: Door 1_22
+    21300044: Door 1_23
+    21300046: Door 1_24
+    21300048: Door 1_25
+    21300050: Door 1_26
+    21300052: Door 1_27
+    21300054: Door 1_28
+    21300056: Door 1_29
+    21300058: Door 1_30
+    21300060: Door 1_31
+    21300062: Door 1_32
+    21300064: Door 1_33
+    21300066: Door 1_34
+    21300068: Door 1_35
+    21300070: Door 1_36
+    21300072: Door 1_37
+    21300074: Door 1_38
+    21300076: Door 1_39
+    21300078: Door 1_40
+    21300080: Door 1_41
+    21300082: Door 1_42
+    21300084: Door 1_43
+    21300086: Door 1_44
+    21300088: Door 1_45
+    21300090: Door 1_46
+    21300092: Door 1_47
+    21300094: Door 1_48
+    21300096: Door 1_49
+    21300098: Door 1_50
+    21300100: Door 1_51
+    21300102: Door 1_52
+    21300104: Door 1_53
+    21300106: Door 1_54
+    21300108: Door 1_55
+    21300110: Door 1_56
+    21300112: Door 1_57
+    21300114: Door 1_58
+    21300116: Door 1_59
+    21300118: Door 1_60
+    21300120: Door 1_61
+    21300122: Door 1_62
+    21300124: Door 1_63
+    21300126: Door 1_64
+    21300128: Door 1_65
+    21300130: Door 1_66
+    21300132: Door 1_67
+    21300134: Door 1_68
+    21300136: Door 1_69
+    21300138: Door 1_70
+    21300140: Door 1_71
+    21300142: Door 1_72
+    21300144: Door 1_73
+    21300146: Door 1_74
+    21300148: Door 1_75
+    21300150: Door 1_76
+    21300152: Door 1_77
+    21300154: Door 1_78
+    21300156: door_openness_2
+    21300158: door_openness_3
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 7
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: 0
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 32
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: door
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 224
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    - serializedVersion: 2
+      name: door_openness_1
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    - serializedVersion: 2
+      name: door_NS
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    - serializedVersion: 2
+      name: door_openness_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 160
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    - serializedVersion: 2
+      name: door_openness_3
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 128
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    outline: []
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
