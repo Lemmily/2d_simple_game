@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using System;
 
 public class InventorySpriteController : MonoBehaviour
 {
@@ -24,7 +25,9 @@ public class InventorySpriteController : MonoBehaviour
 
         // Register our callback so that our GameObject gets updated whenever
         // the tile's type changes.
-        world.RegisterInventoryCreated(OnInventoryCreated);
+        world.inventoryManager.RegisterInventoryCreated(OnInventoryCreated);
+        world.inventoryManager.RegisterInventoryChanged(OnInventoryChanged);
+        world.inventoryManager.RegisterInventoryRemoved(OnInventoryRemoved);
 
         // Check for pre-existing inventory, which won't do the callback.
         foreach (string objectType in world.inventoryManager.inventories.Keys) {
@@ -36,9 +39,18 @@ public class InventorySpriteController : MonoBehaviour
 
         //c.SetDestination( world.GetTileAt( world.Width/2 + 5, world.Height/2 ) );
     }
-    
 
-    public void OnInventoryCreated(Inventory inv) {
+    private void OnInventoryRemoved(Inventory inv)
+    {
+        Debug.Log("OnInventoryRemoved");
+        //do something here to make it disappear.
+
+        GameObject go = inventoryGameObjectMap[inv];
+        inventoryGameObjectMap.Remove(inv);
+        Destroy(go); //want to make us of poolin here really!
+    }
+
+    private void OnInventoryCreated(Inventory inv) {
         Debug.Log("OnInventoryCreated");
         // Create a visual GameObject linked to this data.
 

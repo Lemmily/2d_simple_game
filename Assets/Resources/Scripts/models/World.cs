@@ -27,7 +27,7 @@ public class World : IXmlSerializable
     private Action<Furniture> cbInstalledObjectCreated;
     private Action<Tile> cbTileChanged;
     private Action<Character> cbCharacterCreated;
-    private Action<Inventory> cbInventoryCreated;
+    //private Action<Inventory> cbInventoryCreated;
 
     public JobQueue jobQueue;
 
@@ -230,7 +230,7 @@ public class World : IXmlSerializable
     {
 
         if (inventoryManager.PlaceInventory(tile, inventory)) {
-            cbInventoryCreated(inventory);
+            //cbInventoryCreated(inventory);
             return true;
         }
         else
@@ -240,7 +240,7 @@ public class World : IXmlSerializable
     {
 
         if (inventoryManager.PlaceInventory(job, inventory)) {
-            cbInventoryCreated(inventory);
+            //cbInventoryCreated(inventory);
             return true;
         }else 
             return false;
@@ -270,14 +270,9 @@ public class World : IXmlSerializable
     public void UnregisterTileChanged(Action<Tile> onTileChanged) {
         cbTileChanged -= onTileChanged;
     }
+    
 
-    public void RegisterInventoryCreated(Action<Inventory> callbackfunc) {
-        cbInventoryCreated += callbackfunc;
-    }
 
-    public void UnregisterInventoryCreated(Action<Inventory> callbackfunc) {
-        cbInventoryCreated -= callbackfunc;
-    }
     private void OnTileChanged(Tile tile) {
         if (cbTileChanged == null) {
             return;
@@ -388,27 +383,27 @@ public class World : IXmlSerializable
         Tile t = GetTileAt(Width / 2, Height / 2);
         inventoryManager.PlaceInventory(t, inv);
         inv.tile = t;
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //if (cbInventoryCreated != null) {
+        //    cbInventoryCreated(t.inventory);
+        //}
 
         inv = new Inventory();
         inv.stackSize = 18;
         t = GetTileAt(Width / 2 + 2, Height / 2);
         inventoryManager.PlaceInventory(t, inv);
         inv.tile = t;
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //if (inventoryManager != null) {
+        //    cbInventoryCreated(t.inventory);
+        //}
 
         inv = new Inventory();
         inv.stackSize = 45;
         t = GetTileAt(Width / 2 + 1, Height / 2 + 2);
         inv.tile = t;
         inventoryManager.PlaceInventory(t, inv);
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //if (cbInventoryCreated != null) {
+        //    cbInventoryCreated(t.inventory);
+        //}
     }
 
     private void ReadXml_Characters(XmlReader reader)

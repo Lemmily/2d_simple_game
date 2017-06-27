@@ -139,16 +139,17 @@ public class Tile : IXmlSerializable{
                 int dif = current - inventory.maxStackSize;
                 inventory.stackSize = inventory.maxStackSize;
                 inv.stackSize = dif;
-                return true; 
+                return true;
             }
+            else {
+                inventory.stackSize += inv.stackSize;
 
-            inventory.stackSize += inv.stackSize;
-            
-            return true;
+                return true;
+            }
         }
 
         inventory = inv;
-        //inventory.tile = this;
+        inventory.tile = this;
         return true;
     }
     public bool IsNeighbour(Tile tile) {

@@ -9,8 +9,8 @@ public class Inventory {
 
 
     ////inventory is either on the floor in tile or on a character!
-    //public Tile tile;
-    //public Character character;
+    public Tile tile;
+    public Character character;
 
 
     public Inventory() {
@@ -27,6 +27,10 @@ public class Inventory {
         objectType = other.objectType;
         maxStackSize = other.maxStackSize;
         stackSize = other.stackSize;
+        if (other.tile != null)
+            tile = other.tile;
+        if (other.character != null)
+            character = other.character;
     }
 
     public virtual Inventory Clone() {

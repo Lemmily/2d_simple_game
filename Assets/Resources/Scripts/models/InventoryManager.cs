@@ -6,7 +6,9 @@ public class InventoryManager  {
 
 
     public Dictionary<string, List<Inventory>> inventories;
-
+    private Action<Inventory> cbInventoryCreated;
+    private Action<Inventory> cbInventoryChanged;
+    private Action<Inventory> cbInventoryRemoved;
 
     public InventoryManager() {
         inventories = new Dictionary<string, List<Inventory>>();
@@ -15,17 +17,24 @@ public class InventoryManager  {
     public bool PlaceInventory (Tile tile, Inventory inv) {
         bool tileWasEmpty = tile.inventory != null;
 
-
+        int a = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
             //the tile rejected the inventory.
             Debug.Log("Inventory Manager:- Tried & failed to placed inventory:-" + inv + " on tile :- " + tile);
             return false;
         }
 
+
+        if (tile.inventory != null && inv.stackSize != a) {
+            //how would inv change if there was no tile inventory?
+            cbInventoryChanged(tile.inventory);
+        }
+
         // At this point, "inv" might be an empty stack if it was merged to another stack.
         if (inv.stackSize == 0) {
             if (inventories.ContainsKey(inv.objectType)) {
                 inventories[inv.objectType].Remove(inv);
+                cbInventoryRemoved(inv);
             }
         }
 
@@ -39,29 +48,10 @@ public class InventoryManager  {
 
             inventories[tile.inventory.objectType].Add(tile.inventory);
             Debug.Log("Inventory Manager:- Placed new inventory:-" + inv + " on tile :- " + tile);
+            cbInventoryCreated(tile.inventory);
         }
         Debug.Log("inventories:-" + PrintInventories());
         return true;
-    }
-
-    public string PrintInventories()
-    {
-        string message = "";
-        foreach (KeyValuePair<string,List<Inventory>> inventoryLists in inventories) {
-            message += inventoryLists.Key + ":";
-
-            List<Inventory> list = inventoryLists.Value;
-            if (list.Count > 0) {
-                for (int i = 0; i < list.Count; i++) {
-                    message += "\n";
-                    message += list[i];
-                }
-            } else {
-                message += "" + 0;
-            }
-        }
-
-        return message;
     }
 
     public bool PlaceInventory(Job job, Inventory inv) {
@@ -93,5 +83,61 @@ public class InventoryManager  {
         //}
 
         return true;
+    }
+
+
+
+    public string PrintInventories()
+    {
+        string message = "";
+        foreach (KeyValuePair<string, List<Inventory>> inventoryLists in inventories) {
+            message += inventoryLists.Key + ":";
+
+            List<Inventory> list = inventoryLists.Value;
+            if (list.Count > 0) {
+                for (int i = 0; i < list.Count; i++) {
+                    message += "\n";
+                    message += list[i];
+                }
+            }
+            else {
+                message += "" + 0;
+            }
+        }
+
+        return message;
+    }
+
+
+
+
+    public void RegisterInventoryCreated(Action<Inventory> callbackfunc)
+    {
+        cbInventoryCreated += callbackfunc;
+    }
+
+    public void UnregisterInventoryCreated(Action<Inventory> callbackfunc)
+    {
+        cbInventoryCreated -= callbackfunc;
+    }
+
+
+    public void RegisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged += callbackfunc;
+    }
+
+    public void UnregisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged -= callbackfunc;
+    }
+    public void RegisterInventoryRemoved(Action<Inventory> callbackfunc)
+    {
+        cbInventoryRemoved += callbackfunc;
+    }
+
+    public void UnregisterInventoryRemoved(Action<Inventory> callbackfunc)
+    {
+        cbInventoryRemoved -= callbackfunc;
     }
 }
