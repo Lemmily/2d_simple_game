@@ -15,7 +15,7 @@ public class InventoryManager  {
     }
 
     public bool PlaceInventory (Tile tile, Inventory inv) {
-        bool tileWasEmpty = tile.inventory != null;
+        bool tileWasEmpty = tile.inventory == null;
 
         int a = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
@@ -32,10 +32,7 @@ public class InventoryManager  {
 
         // At this point, "inv" might be an empty stack if it was merged to another stack.
         if (inv.stackSize == 0) {
-            if (inventories.ContainsKey(inv.objectType)) {
-                inventories[inv.objectType].Remove(inv);
-                cbInventoryRemoved(inv);
-            }
+            ClearEmptyInventory(inv);
         }
 
         // We may also created a new stack on the tile, if the tile was previously empty.
@@ -54,37 +51,87 @@ public class InventoryManager  {
         return true;
     }
 
+    private void ClearEmptyInventory(Inventory inv)
+    {
+        if (inv.stackSize == 0 && inventories.ContainsKey(inv.objectType)) {
+            inventories[inv.objectType].Remove(inv);
+            cbInventoryRemoved(inv);
+
+            if (inv.tile != null) {
+                inv.tile.inventory = null;
+                inv.tile = null;
+            }
+            if (inv.character != null) {
+                inv.character.inventory = null;
+                inv.character = null;
+
+            }
+        }
+    }
+
     public bool PlaceInventory(Job job, Inventory inv) {
 
         if (job.DesiresInventoryType(inv) == false) {
             Debug.LogError("Tried to give a job an inventory item it didn;t need.");
         }
+        job.inventoryRequirements[inv.objectType].stackSize += inv.stackSize;
+        if (job.inventoryRequirements[inv.objectType].maxStackSize < job.inventoryRequirements[inv.objectType].stackSize) {
+            inv.stackSize = job.inventoryRequirements[inv.objectType].stackSize - job.inventoryRequirements[inv.objectType].maxStackSize;
+            job.inventoryRequirements[inv.objectType].stackSize = job.inventoryRequirements[inv.objectType].maxStackSize;
+           
+        } else {
+            //already put stuff into job inventory so clear the other!
+            inv.stackSize = 0;
+        }
 
-        //bool tileWasEmpty = tile.inventory == null
-        //if (!tile.PlaceInventory(inv)) {
-        //    //the tile rejected the inventory.
-        //    return false;
-        //}
-        //
-        //// At this point, "inv" might be an empty stack if it was merged to another stack.
-        //if (inv.stackSize == 0) {
-        //    if (inventories.ContainsKey(tile.inventory.objectType)) {
-        //        inventories[inv.objectType].Remove(inv);
-        //    }
-        //}
-        //
-        //// We may also created a new stack on the tile, if the tile was previously empty.
-        //if (tileWasEmpty) {
-        //    if (inventories.ContainsKey(tile.inventory.objectType) == false) {
-        //        inventories[tile.inventory.objectType] = new List<Inventory>();
-        //    }
-        //
-        //    inventories[tile.inventory.objectType].Add(tile.inventory);
-        //}
+        if (inv.stackSize == 0) {
+            ClearEmptyInventory(inv);
+        }
+
 
         return true;
     }
 
+    public bool PlaceInventory(Character character, Inventory inv)
+    {
+
+        character.inventory.stackSize += inv.stackSize;
+
+        if(character.inventory.maxStackSize < character.inventory.stackSize) {
+            inv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
+            character.inventory.stackSize = character.inventory.maxStackSize;
+        }
+       
+        if (inv.stackSize == 0) {
+            ClearEmptyInventory(inv);
+        }
+        return true;
+    }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="objectType"></param>
+    /// <param name="t"></param>
+    /// <param name="desiredAmount">Desired Amount. If no stack has enough it returns the largest</param>
+    /// <returns></returns>
+    public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount)
+    {
+
+        //FIXME: lies aout the closest item
+        if (inventories.ContainsKey(objectType) == false)
+            return null;
+
+        foreach (Inventory inv in inventories[objectType])
+	    {
+            if (inv.tile != null) {
+                return inv;
+            }
+	    }
+
+        return null;
+    }
 
 
     public string PrintInventories()

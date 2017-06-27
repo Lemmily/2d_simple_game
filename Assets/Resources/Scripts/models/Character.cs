@@ -13,8 +13,7 @@ public class Character : IXmlSerializable{
             return  Mathf.Lerp( currTile.X, nextTile.X, movementPercentage);
              }
     }
-    public float y
-    {
+    public float y{
         get
         {
             return  Mathf.Lerp(currTile.Y, nextTile.Y, movementPercentage);
@@ -48,7 +47,7 @@ public class Character : IXmlSerializable{
     Action<Queue<Tile>> cbPathChanged;
 
     Job myJob;
-    private Inventory inventory;
+    public Inventory inventory;
 
     public Character(Tile tile) {
         currTile = tile;
@@ -165,6 +164,8 @@ public class Character : IXmlSerializable{
 
 
     private void GetNewJob() {
+
+        //FIXME: just gets first job.
         myJob = currTile.world.jobQueue.Dequeue();
         if (myJob == null)
             return;
@@ -196,21 +197,17 @@ public class Character : IXmlSerializable{
                 destTile = currTile;
                 return;
             }
-
-
-
+            
         }
         // We have a job! And it's reachable.
 
 
         if (myJob.HasAllMaterials() == false) {
             //we're missing something!
-
-
             if (inventory != null) {
 
                 //check to see if what I'm carrying is something the job needs.
-                if(myJob.DesiresInventoryType(inventory)) {
+                if (myJob.DesiresInventoryType(inventory)) {
 
                     if (currTile == myJob.tile) {
                         //myJob.inventoryRequirements[inventory.objectType];
@@ -221,12 +218,32 @@ public class Character : IXmlSerializable{
                 }
                 //otherwise, drop/stockpile it?
             }
+            else {
 
-            destTile = myJob.tile;
+                if (currTile.inventory != null && myJob.DesiresInventoryType(currTile.inventory)) {
+                    currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
+                }
+                else {
 
+                    Inventory desired = myJob.GetFirstDesiredInventory();
+                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(
+                        desired.objectType,
+                        currTile,
+                        desired.maxStackSize - desired.stackSize
+                        );
+                    if (supplier == null) {
+                        Debug.Log("No tile available containing objects of " + desired.objectType + " available");
+                        AbandonJob();
+                        return;
+                    }
 
-
+                    destTile = supplier.tile;
+                    return;
+                }
+            }
+            return; // we can't get further until we have all items
         }
+        destTile = myJob.tile;
 
         // Are we there yet?
         //if (myJob != null && currTile == myJob.tile) {

@@ -112,4 +112,15 @@ public class Job{
 
     }
 
+    public Inventory GetFirstDesiredInventory()
+    {
+        foreach (Inventory inv in inventoryRequirements.Values) {
+            if(inv.stackSize < inv.maxStackSize) {
+                return inv;
+            }
+        }
+
+        return null;
+    }
+
 }
