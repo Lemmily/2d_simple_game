@@ -42,6 +42,8 @@ public class World : IXmlSerializable
         }
         // make one character
         //Character c = CreateCharacter(GetTileAt(Width / 2, Height / 2));
+
+        
     }
 
 
@@ -71,8 +73,10 @@ public class World : IXmlSerializable
         Debug.Log("world created with " + (Width * Height) + " tiles.");
 
         CreateFurniturePrototypes();
-      
-        
+        Tile t = tiles[Width / 2 + 1, Height / 2 + 1];
+        inventoryManager.PlaceInventory(t , new Inventory());
+
+
     }
 
     public void DeleteRoom( Room r) {
@@ -123,6 +127,7 @@ public class World : IXmlSerializable
             );
 
 
+
         furnitureProto.Add("door", new Furniture("door", 1.5f, true, 1, 1, false));
 
         furnitureProto["door"].furnParameters["openness"] = 0;
@@ -131,6 +136,9 @@ public class World : IXmlSerializable
 
         furnitureProto["door"].IsEnterable = FurnitureActions.Door_IsEnterable;
 
+        furnitureJobPrototypes.Add("door",
+             new Job(null, "door", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) })
+             );
     }
 
     public Tile GetTileAt(int x, int y) {
@@ -149,7 +157,7 @@ public class World : IXmlSerializable
             for (int y = b-5; y < b+15; y++) {
                 tiles[x, y].Type = TileType.Floor;
 
-                if (x== 1 || x == (l+9) || y == b || y == (b + 9)) {
+                if (x== 1 || x == (l+9) || y == 1 || y == b || y == (b + 9)) {
                     if(x != (l + 9) && y != (b + 4)) {
                         PlaceFurniture("wall", tiles[x,y]);
                     }
@@ -157,6 +165,7 @@ public class World : IXmlSerializable
             }
 
         }
+        
     }
 
 
@@ -208,6 +217,36 @@ public class World : IXmlSerializable
 
         return furniture;
     }
+
+
+
+    public void PlaceInventory()
+    {
+        //return 
+        PlaceInventory(tiles[50, 50], new Inventory("steel plate", 50, 10));
+    }
+
+    public bool PlaceInventory(Tile tile, Inventory inventory)
+    {
+
+        if (inventoryManager.PlaceInventory(tile, inventory)) {
+            cbInventoryCreated(inventory);
+            return true;
+        }
+        else
+            return false;
+    }
+    public bool PlaceInventory(Job job, Inventory inventory)
+    {
+
+        if (inventoryManager.PlaceInventory(job, inventory)) {
+            cbInventoryCreated(inventory);
+            return true;
+        }else 
+            return false;
+    }
+
+
 
     public void RegisterFurnitureCreated(Action<Furniture> callbackFunc) {
         cbInstalledObjectCreated += callbackFunc;

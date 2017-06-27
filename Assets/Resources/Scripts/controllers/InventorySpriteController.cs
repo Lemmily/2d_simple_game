@@ -64,14 +64,14 @@ public class InventorySpriteController : MonoBehaviour
 
             GameObject ui_go = Instantiate(inventoryUIPrefab);
             ui_go.transform.SetParent(inv_go.transform);
-            ui_go.transform.localPosition = Vector3.zero;
+            ui_go.transform.localPosition = new Vector3(-0.5f, -0.5f);
             ui_go.GetComponentInChildren<Text>().text = inv.stackSize.ToString();
         }
 
         // Register our callback so that our GameObject gets updated whenever
         // the object's into changes.
         // FIXME: Add on changed callbacks
-        //inv.RegisterOnChangedCallback( OnCharacterChanged );
+        //inv.RegisterOnChangedCallback( OnInventoryChanged );
 
     }
 
@@ -79,20 +79,20 @@ public class InventorySpriteController : MonoBehaviour
         // FIXME:  Still needs to work!  And get called!
 
         //Debug.Log("OnFurnitureChanged");
-        // Make sure the furniture's graphics are correct.
+        // Make sure the inventory's graphics are correct.
 
         if (inventoryGameObjectMap.ContainsKey(inv) == false) {
-            Debug.LogError("OnCharacterChanged -- trying to change visuals for character not in our map.");
+            Debug.LogError("OnInventoryChanged -- trying to change visuals for inventory not in our map.");
             return;
         }
 
-        GameObject char_go = inventoryGameObjectMap[inv];
-        //Debug.Log(furn_go);
-        //Debug.Log(furn_go.GetComponent<SpriteRenderer>());
+        GameObject inv_go = inventoryGameObjectMap[inv];
 
-        //char_go.GetComponent<SpriteRenderer>().sprite = GetSpriteForFurniture(furn);
+        //gotta make some kind of decision for when the character is carrying the items?
 
-        char_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
+        inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
+        
+        inv_go.GetComponentInChildren<Text>().text = "" + inv.stackSize;
     }
 
 

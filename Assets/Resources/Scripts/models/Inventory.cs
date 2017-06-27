@@ -3,14 +3,14 @@ using System.Collections;
 
 public class Inventory {
 
-    public string objectType = "Steel Plate";
+    public string objectType = "steel plate";
     public int maxStackSize = 50;
     public int stackSize = 1;
 
 
-    //inventory is either on the floor in tile or on a character!
-    public Tile tile;
-    public Character character;
+    ////inventory is either on the floor in tile or on a character!
+    //public Tile tile;
+    //public Character character;
 
 
     public Inventory() {
@@ -33,4 +33,9 @@ public class Inventory {
         return new Inventory(this);
     }
 
+
+    override public string ToString()
+    {
+        return "" + objectType + ":" + stackSize + "/" + maxStackSize;
+    }
 }

@@ -15,7 +15,8 @@ public class Job{
 
     public string theFurniture { get; protected set;  }
 
-    public Job (Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] inventoryRequirements) {
+    public Job (Tile tile, string jobObjectType, Action<Job> cbJobComplete, 
+                                    float jobTime, Inventory[] inventoryRequirements) {
         this.tile = tile;
         this.cbJobComplete += cbJobComplete;
         this.jobTime = jobTime;
@@ -105,7 +106,7 @@ public class Job{
         if (inventoryRequirements[inv.objectType].stackSize >= inventoryRequirements[inv.objectType].maxStackSize) {
             return false;
         }
-
+         
         //if we're here we have enough fo this type of materials.
         return true;
 

@@ -43,6 +43,21 @@ public class WorldController : MonoBehaviour {
         
     }
 
+    public void PlaceInventory()
+    {
+        //return 
+            PlaceInventory(GetTileAtWorldCoord(new Vector3(50, 50, 0)), new Inventory("steel plate", 50, 10));
+    }
+
+    public bool PlaceInventory(Tile tile, Inventory inventory)
+    {
+        return world.PlaceInventory(tile, inventory);
+    }
+    public bool PlaceInventory(Job job, Inventory inventory)
+    {
+        return world.PlaceInventory(job, inventory);
+    }
+
     public void MakePathTest() {
         world.SetupPathFindingTest();
 

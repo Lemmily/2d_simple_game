@@ -134,16 +134,21 @@ public class Tile : IXmlSerializable{
                 return false;
             }
             if (inventory.stackSize + inv.stackSize > inv.maxStackSize) {
-                Debug.LogError("Trying to add too many items to inventory!");
-                return false;
+                Debug.LogError("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
+                int current = inventory.stackSize + inv.stackSize;
+                int dif = current - inventory.maxStackSize;
+                inventory.stackSize = inventory.maxStackSize;
+                inv.stackSize = dif;
+                return true; 
             }
 
             inventory.stackSize += inv.stackSize;
+            
             return true;
         }
 
         inventory = inv;
-
+        //inventory.tile = this;
         return true;
     }
     public bool IsNeighbour(Tile tile) {
