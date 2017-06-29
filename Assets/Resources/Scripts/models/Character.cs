@@ -48,6 +48,7 @@ public class Character : IXmlSerializable{
 
     Job myJob;
     public Inventory inventory;
+    private int maxStackSize;
 
     public Character(Tile tile) {
         currTile = tile;
@@ -55,6 +56,7 @@ public class Character : IXmlSerializable{
         destTile = tile;
         speed = 5f;
         movementPercentage = 0.0f;
+        maxStackSize = 50; // i can carry a maximum of 50 things.
     }
 
     public void SetDestination(Tile tile) {
@@ -204,13 +206,14 @@ public class Character : IXmlSerializable{
 
         if (myJob.HasAllMaterials() == false) {
             //we're missing something!
-            if (inventory != null) {
-
+            if (inventory != null && inventory.stackSize > 0) {
+                //Im already carrying something
                 //check to see if what I'm carrying is something the job needs.
-                if (myJob.DesiresInventoryType(inventory)) {
+                if (myJob.DesiresInventory(inventory) > 0) {
 
                     if (currTile == myJob.tile) {
                         //myJob.inventoryRequirements[inventory.objectType];
+                        currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
                     }
                     else {
                         destTile = myJob.tile;
@@ -220,7 +223,7 @@ public class Character : IXmlSerializable{
             }
             else {
 
-                if (currTile.inventory != null && myJob.DesiresInventoryType(currTile.inventory)) {
+                if (currTile.inventory != null && (myJob.DesiresInventory(currTile.inventory) > 0)) {
                     currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
                 }
                 else {
@@ -236,7 +239,9 @@ public class Character : IXmlSerializable{
                         AbandonJob();
                         return;
                     }
+                    if (inventory == null) {
 
+                    }
                     destTile = supplier.tile;
                     return;
                 }

@@ -4,7 +4,6 @@ using System;
 
 public class InventoryManager  {
 
-
     public Dictionary<string, List<Inventory>> inventories;
     private Action<Inventory> cbInventoryCreated;
     private Action<Inventory> cbInventoryChanged;
@@ -14,18 +13,54 @@ public class InventoryManager  {
         inventories = new Dictionary<string, List<Inventory>>();
     }
 
-    public bool PlaceInventory (Tile tile, Inventory inv) {
+    private void ClearEmptyInventory(Inventory inv)
+    {
+        if (inv.stackSize == 0 && inventories.ContainsKey(inv.objectType)) {
+            inventories[inv.objectType].Remove(inv);
+            cbInventoryRemoved(inv);
+
+            if (inv.tile != null) {
+                inv.tile.inventory = null;
+                inv.tile = null;
+            }
+            if (inv.character != null) {
+                inv.character.inventory = null;
+                inv.character = null;
+            }
+            //if (inv.job != null) {
+
+            //}
+        }
+
+        inv = null;
+    }
+
+
+    public void ChangeInventory(Inventory inventory,  int stackSize, string objectType = "-", int maxStackSize=-1)
+    {
+        if (maxStackSize != -1)
+            inventory.maxStackSize = maxStackSize;
+        
+        if(objectType != "-")
+            inventory.objectType = objectType;
+        
+        inventory.stackSize = stackSize;
+        cbInventoryChanged(inventory);
+    }
+
+
+    public bool PlaceInventory (Tile tile, Inventory inv, int amount = -1)
+    {
         bool tileWasEmpty = tile.inventory == null;
 
-        int a = inv.stackSize;
+        int inv_stackSize = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
             //the tile rejected the inventory.
             Debug.Log("Inventory Manager:- Tried & failed to placed inventory:-" + inv + " on tile :- " + tile);
             return false;
         }
-
-
-        if (tile.inventory != null && inv.stackSize != a) {
+        
+        if (tile.inventory != null && inv.stackSize != inv_stackSize) {
             //how would inv change if there was no tile inventory?
             cbInventoryChanged(tile.inventory);
         }
@@ -44,34 +79,17 @@ public class InventoryManager  {
             }
 
             inventories[tile.inventory.objectType].Add(tile.inventory);
-            Debug.Log("Inventory Manager:- Placed new inventory:-" + inv + " on tile :- " + tile);
-            cbInventoryCreated(tile.inventory);
+            Debug.Log("Inventory Manager:- Placed new inventory:-" + tile.inventory + " on tile :- " + tile);
+            if (cbInventoryCreated != null)
+                cbInventoryCreated(tile.inventory);
         }
         Debug.Log("inventories:-" + PrintInventories());
         return true;
     }
 
-    private void ClearEmptyInventory(Inventory inv)
-    {
-        if (inv.stackSize == 0 && inventories.ContainsKey(inv.objectType)) {
-            inventories[inv.objectType].Remove(inv);
-            cbInventoryRemoved(inv);
+    public bool PlaceInventory(Job job, Inventory inv, int amount=-1) {
 
-            if (inv.tile != null) {
-                inv.tile.inventory = null;
-                inv.tile = null;
-            }
-            if (inv.character != null) {
-                inv.character.inventory = null;
-                inv.character = null;
-
-            }
-        }
-    }
-
-    public bool PlaceInventory(Job job, Inventory inv) {
-
-        if (job.DesiresInventoryType(inv) == false) {
+        if (job.DesiresInventory(inv) < 0) {
             Debug.LogError("Tried to give a job an inventory item it didn;t need.");
         }
         job.inventoryRequirements[inv.objectType].stackSize += inv.stackSize;
@@ -92,18 +110,22 @@ public class InventoryManager  {
         return true;
     }
 
-    public bool PlaceInventory(Character character, Inventory inv)
+    public bool PlaceInventory(Character character, Inventory srcInv, int amount = -1)
     {
-
-        character.inventory.stackSize += inv.stackSize;
+        if (character.inventory == null) {
+            character.inventory = srcInv.Clone();
+            character.inventory.stackSize = 0;
+            inventories[character.inventory.objectType].Add(character.inventory);
+        }
+        character.inventory.stackSize += srcInv.stackSize;
 
         if(character.inventory.maxStackSize < character.inventory.stackSize) {
-            inv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
+            srcInv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
             character.inventory.stackSize = character.inventory.maxStackSize;
         }
        
-        if (inv.stackSize == 0) {
-            ClearEmptyInventory(inv);
+        if (srcInv.stackSize == 0) {
+            ClearEmptyInventory(srcInv);
         }
         return true;
     }

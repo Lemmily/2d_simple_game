@@ -121,34 +121,34 @@ public class Tile : IXmlSerializable{
     }
 
 
-    public bool PlaceInventory(Inventory inv) {
-        if (inv == null) {
+    public bool PlaceInventory(Inventory other_inv) {
+        if (other_inv == null) {
             inventory = null;
             return true;
         }
 
         if (inventory != null) {
             // already inventory, amybe combine stacks?
-            if (inventory.objectType != inv.objectType) {
+            if (inventory.objectType != other_inv.objectType && inventory.stackSize > 0) {
                 Debug.LogError("trying to assign inventory to tile that has a DIFFERENT type");
                 return false;
             }
-            if (inventory.stackSize + inv.stackSize > inv.maxStackSize) {
+            if (inventory.stackSize + other_inv.stackSize > other_inv.maxStackSize) {
                 Debug.LogError("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
-                int current = inventory.stackSize + inv.stackSize;
+                int current = inventory.stackSize + other_inv.stackSize;
                 int dif = current - inventory.maxStackSize;
-                inventory.stackSize = inventory.maxStackSize;
-                inv.stackSize = dif;
+                world.inventoryManager.ChangeInventory(inventory, inventory.maxStackSize, other_inv.objectType);
+                world.inventoryManager.ChangeInventory(other_inv, dif);
                 return true;
             }
             else {
-                inventory.stackSize += inv.stackSize;
+                world.inventoryManager.ChangeInventory(inventory, inventory.stackSize + other_inv.stackSize);
 
                 return true;
             }
         }
 
-        inventory = inv;
+        inventory = other_inv;
         inventory.tile = this;
         return true;
     }

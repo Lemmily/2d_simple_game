@@ -3,9 +3,33 @@ using System.Collections;
 
 public class Inventory {
 
+    public static int _nextInv = 0;
+
+    public int nextInv {
+        get {
+            int i = _nextInv;
+            _nextInv++;
+            return i;
+        } }
+
+
+    private int number;
     public string objectType = "steel plate";
     public int maxStackSize = 50;
-    public int stackSize = 1;
+    private int _stackSize = 1;
+    public int stackSize
+    {
+        get
+        {
+            return _stackSize;
+        }
+
+        set
+        {
+            _stackSize = value;
+        }
+    }
+
 
 
     ////inventory is either on the floor in tile or on a character!
@@ -14,13 +38,14 @@ public class Inventory {
 
 
     public Inventory() {
-
+        number = nextInv;
     }
 
     public Inventory (string objectType, int maxStackSize, int stackSize) {
         this.objectType = objectType;
         this.maxStackSize = maxStackSize;
         this.stackSize = stackSize;
+        number = nextInv;
     }
 
     protected Inventory(Inventory other) {
@@ -31,6 +56,7 @@ public class Inventory {
             tile = other.tile;
         if (other.character != null)
             character = other.character;
+        number = nextInv;
     }
 
     public virtual Inventory Clone() {
@@ -40,6 +66,6 @@ public class Inventory {
 
     override public string ToString()
     {
-        return "" + objectType + ":" + stackSize + "/" + maxStackSize;
+        return "" + number + ":" + objectType + ":" + stackSize + "/" + maxStackSize;
     }
 }

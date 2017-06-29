@@ -98,17 +98,17 @@ public class Job{
     }
 
 
-    public bool DesiresInventoryType(Inventory inv) {
+    public int DesiresInventory(Inventory inv) {
         if (inventoryRequirements.ContainsKey(inv.objectType) == false) {
-            return false;
+            return 0;
         }
 
         if (inventoryRequirements[inv.objectType].stackSize >= inventoryRequirements[inv.objectType].maxStackSize) {
-            return false;
+            return 0;
         }
          
-        //if we're here we have enough fo this type of materials.
-        return true;
+        //returns the amount still wanted of this particular inventory type.
+        return inventoryRequirements[inv.objectType].maxStackSize - inventoryRequirements[inv.objectType].stackSize;
 
     }
 

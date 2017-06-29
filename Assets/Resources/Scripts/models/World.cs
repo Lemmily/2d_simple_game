@@ -36,14 +36,17 @@ public class World : IXmlSerializable
 
     public World(int width, int height) {
         SetupWorld(width, height);
+        Tile t;
         if (characters.Count < 1) {
-            Tile t = tiles[Width / 2, Height / 2];
+            t = tiles[Width / 2, Height / 2];
             CreateCharacter(t);
         }
         // make one character
         //Character c = CreateCharacter(GetTileAt(Width / 2, Height / 2));
 
-        
+
+        t = tiles[Width / 2 + 1, Height / 2 + 1];
+        inventoryManager.PlaceInventory(t, new Inventory());
     }
 
 
@@ -73,8 +76,6 @@ public class World : IXmlSerializable
         Debug.Log("world created with " + (Width * Height) + " tiles.");
 
         CreateFurniturePrototypes();
-        Tile t = tiles[Width / 2 + 1, Height / 2 + 1];
-        inventoryManager.PlaceInventory(t , new Inventory());
 
 
     }
@@ -123,7 +124,7 @@ public class World : IXmlSerializable
         
         furnitureProto.Add("wall", new Furniture("wall", 0f, true, 1, 1,true));
         furnitureJobPrototypes.Add("wall", 
-            new Job(null, "wall", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) })
+            new Job(null, "wall", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("steel plate", 5, 0) })
             );
 
 
@@ -137,7 +138,7 @@ public class World : IXmlSerializable
         furnitureProto["door"].IsEnterable = FurnitureActions.Door_IsEnterable;
 
         furnitureJobPrototypes.Add("door",
-             new Job(null, "door", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) })
+             new Job(null, "door", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("steel plate", 5, 0) })
              );
     }
 

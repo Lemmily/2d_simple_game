@@ -44,10 +44,18 @@ public class InventorySpriteController : MonoBehaviour
     {
         Debug.Log("OnInventoryRemoved");
         //do something here to make it disappear.
+        if (inventoryGameObjectMap.ContainsKey(inv)) {
+            GameObject go = inventoryGameObjectMap[inv];
+            inventoryGameObjectMap.Remove(inv);
+            foreach (GameObject each_go in go.GetComponentsInChildren<GameObject>()) {
+                Destroy(each_go);
+            }
 
-        GameObject go = inventoryGameObjectMap[inv];
-        inventoryGameObjectMap.Remove(inv);
-        Destroy(go); //want to make us of poolin here really!
+            Destroy(go);
+            Debug.Log("InventoryRemoved - did sum destructions.");
+        } else {
+            //where is it and how much should i delete?
+        }
     }
 
     private void OnInventoryCreated(Inventory inv) {
