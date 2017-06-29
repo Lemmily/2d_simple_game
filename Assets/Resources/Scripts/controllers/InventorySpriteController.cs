@@ -5,7 +5,7 @@ using System;
 
 public class InventorySpriteController : MonoBehaviour
 {
-
+    public static InventorySpriteController Instance;
     public GameObject inventoryUIPrefab;
 
     Dictionary<Inventory, GameObject> inventoryGameObjectMap;
@@ -19,7 +19,7 @@ public class InventorySpriteController : MonoBehaviour
 
     // Use this for initialization
     void Start() {
-
+        Instance = this;
         // Instantiate our dictionary that tracks which GameObject is rendering which Tile data.
         inventoryGameObjectMap = new Dictionary<Inventory, GameObject>();
 
@@ -95,13 +95,13 @@ public class InventorySpriteController : MonoBehaviour
 
     }
 
-    void OnInventoryChanged(Inventory inv) {
+    public void OnInventoryChanged(Inventory inv) {
         // FIXME:  Still needs to work!  And get called!
 
-        //Debug.Log("OnFurnitureChanged");
+        Debug.Log("OnInventoryChanged");
         // Make sure the inventory's graphics are correct.
 
-        if (inventoryGameObjectMap.ContainsKey(inv) == false) {
+        if (!inventoryGameObjectMap.ContainsKey(inv) || inventoryGameObjectMap.) {
             Debug.LogError("OnInventoryChanged -- trying to change visuals for inventory not in our map.");
             return;
         }

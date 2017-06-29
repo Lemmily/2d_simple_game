@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
-
+using System;
 public class Inventory {
 
     public static int _nextInv = 0;
@@ -27,6 +26,7 @@ public class Inventory {
         set
         {
             _stackSize = value;
+            cbInventoryChanged(this);
         }
     }
 
@@ -35,7 +35,7 @@ public class Inventory {
     ////inventory is either on the floor in tile or on a character!
     public Tile tile;
     public Character character;
-
+    private Action<Inventory> cbInventoryChanged;
 
     public Inventory() {
         number = nextInv;
@@ -67,5 +67,15 @@ public class Inventory {
     override public string ToString()
     {
         return "" + number + ":" + objectType + ":" + stackSize + "/" + maxStackSize;
+    }
+
+    public void RegisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged += callbackfunc;
+    }
+
+    public void UnregisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged -= callbackfunc;
     }
 }

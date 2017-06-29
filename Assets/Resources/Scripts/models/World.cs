@@ -46,7 +46,7 @@ public class World : IXmlSerializable
 
 
         t = tiles[Width / 2 + 1, Height / 2 + 1];
-        inventoryManager.PlaceInventory(t, new Inventory());
+        //inventoryManager.PlaceInventory(t, new Inventory());
     }
 
 
@@ -377,34 +377,34 @@ public class World : IXmlSerializable
         InvalidateTileGraph();
 
 
-        // DEBUGGING ONLY!  REMOVE ME LATER!
-        // Create an Inventory Item
-        Inventory inv = new Inventory();
-        inv.stackSize = 10;
-        Tile t = GetTileAt(Width / 2, Height / 2);
-        inventoryManager.PlaceInventory(t, inv);
-        inv.tile = t;
-        //if (cbInventoryCreated != null) {
-        //    cbInventoryCreated(t.inventory);
-        //}
+        //// DEBUGGING ONLY!  REMOVE ME LATER!
+        //// Create an Inventory Item
+        //Inventory inv = new Inventory();
+        //inv.stackSize = 10;
+        //Tile t = GetTileAt(Width / 2, Height / 2);
+        //inventoryManager.PlaceInventory(t, inv);
+        //inv.tile = t;
+        ////if (cbInventoryCreated != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
 
-        inv = new Inventory();
-        inv.stackSize = 18;
-        t = GetTileAt(Width / 2 + 2, Height / 2);
-        inventoryManager.PlaceInventory(t, inv);
-        inv.tile = t;
-        //if (inventoryManager != null) {
-        //    cbInventoryCreated(t.inventory);
-        //}
+        //inv = new Inventory();
+        //inv.stackSize = 18;
+        //t = GetTileAt(Width / 2 + 2, Height / 2);
+        //inventoryManager.PlaceInventory(t, inv);
+        //inv.tile = t;
+        ////if (inventoryManager != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
 
-        inv = new Inventory();
-        inv.stackSize = 45;
-        t = GetTileAt(Width / 2 + 1, Height / 2 + 2);
-        inv.tile = t;
-        inventoryManager.PlaceInventory(t, inv);
-        //if (cbInventoryCreated != null) {
-        //    cbInventoryCreated(t.inventory);
-        //}
+        //inv = new Inventory();
+        //inv.stackSize = 45;
+        //t = GetTileAt(Width / 2 + 1, Height / 2 + 2);
+        //inv.tile = t;
+        //inventoryManager.PlaceInventory(t, inv);
+        ////if (cbInventoryCreated != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
     }
 
     private void ReadXml_Characters(XmlReader reader)

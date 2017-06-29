@@ -32,21 +32,22 @@ public class InventoryManager  {
             //}
         }
 
+        inv.UnregisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
         inv = null;
     }
 
 
-    public void ChangeInventory(Inventory inventory,  int stackSize, string objectType = "-", int maxStackSize=-1)
-    {
-        if (maxStackSize != -1)
-            inventory.maxStackSize = maxStackSize;
+    //public void ChangeInventory(Inventory inventory,  int stackSize, string objectType = "-", int maxStackSize=-1)
+    //{
+    //    if (maxStackSize != -1)
+    //        inventory.maxStackSize = maxStackSize;
         
-        if(objectType != "-")
-            inventory.objectType = objectType;
+    //    if(objectType != "-")
+    //        inventory.objectType = objectType;
         
-        inventory.stackSize = stackSize;
-        cbInventoryChanged(inventory);
-    }
+    //    inventory.stackSize = stackSize;
+    //    cbInventoryChanged(inventory);
+    //}
 
 
     public bool PlaceInventory (Tile tile, Inventory inv, int amount = -1)
@@ -80,8 +81,11 @@ public class InventoryManager  {
 
             inventories[tile.inventory.objectType].Add(tile.inventory);
             Debug.Log("Inventory Manager:- Placed new inventory:-" + tile.inventory + " on tile :- " + tile);
-            if (cbInventoryCreated != null)
+            if (cbInventoryCreated != null) {
                 cbInventoryCreated(tile.inventory);
+                tile.inventory.RegisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
+            }
+                
         }
         Debug.Log("inventories:-" + PrintInventories());
         return true;
@@ -92,14 +96,14 @@ public class InventoryManager  {
         if (job.DesiresInventory(inv) < 0) {
             Debug.LogError("Tried to give a job an inventory item it didn;t need.");
         }
-        job.inventoryRequirements[inv.objectType].stackSize += inv.stackSize;
+        ChangeInventory(job.inventoryRequirements[inv.objectType], job.inventoryRequirements[inv.objectType].stackSize + inv.stackSize);
         if (job.inventoryRequirements[inv.objectType].maxStackSize < job.inventoryRequirements[inv.objectType].stackSize) {
-            inv.stackSize = job.inventoryRequirements[inv.objectType].stackSize - job.inventoryRequirements[inv.objectType].maxStackSize;
-            job.inventoryRequirements[inv.objectType].stackSize = job.inventoryRequirements[inv.objectType].maxStackSize;
+            ChangeInventory(inv, job.inventoryRequirements[inv.objectType].stackSize - job.inventoryRequirements[inv.objectType].maxStackSize);
+            ChangeInventory(job.inventoryRequirements[inv.objectType], job.inventoryRequirements[inv.objectType].maxStackSize);
            
         } else {
             //already put stuff into job inventory so clear the other!
-            inv.stackSize = 0;
+            ChangeInventory(inv, 0);
         }
 
         if (inv.stackSize == 0) {
@@ -114,14 +118,14 @@ public class InventoryManager  {
     {
         if (character.inventory == null) {
             character.inventory = srcInv.Clone();
-            character.inventory.stackSize = 0;
+            ChangeInventory(character.inventory, 0);
             inventories[character.inventory.objectType].Add(character.inventory);
         }
-        character.inventory.stackSize += srcInv.stackSize;
+        ChangeInventory(character.inventory, character.inventory.stackSize + srcInv.stackSize);
 
         if(character.inventory.maxStackSize < character.inventory.stackSize) {
-            srcInv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
-            character.inventory.stackSize = character.inventory.maxStackSize;
+            ChangeInventory(srcInv, character.inventory.stackSize - character.inventory.maxStackSize);
+            ChangeInventory(character.inventory, character.inventory.maxStackSize);
         }
        
         if (srcInv.stackSize == 0) {
@@ -190,16 +194,6 @@ public class InventoryManager  {
         cbInventoryCreated -= callbackfunc;
     }
 
-
-    public void RegisterInventoryChanged(Action<Inventory> callbackfunc)
-    {
-        cbInventoryChanged += callbackfunc;
-    }
-
-    public void UnregisterInventoryChanged(Action<Inventory> callbackfunc)
-    {
-        cbInventoryChanged -= callbackfunc;
-    }
     public void RegisterInventoryRemoved(Action<Inventory> callbackfunc)
     {
         cbInventoryRemoved += callbackfunc;
