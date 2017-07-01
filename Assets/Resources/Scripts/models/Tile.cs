@@ -137,12 +137,13 @@ public class Tile : IXmlSerializable{
                 Debug.LogError("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
                 int current = inventory.stackSize + other_inv.stackSize;
                 int dif = current - inventory.maxStackSize;
-                world.inventoryManager.ChangeInventory(inventory, inventory.maxStackSize, other_inv.objectType);
-                world.inventoryManager.ChangeInventory(other_inv, dif);
+                inventory.objectType = other_inv.objectType;
+                inventory.stackSize = inventory.maxStackSize;
+                other_inv.stackSize = dif;
                 return true;
             }
             else {
-                world.inventoryManager.ChangeInventory(inventory, inventory.stackSize + other_inv.stackSize);
+                inventory.stackSize += other_inv.stackSize;
 
                 return true;
             }

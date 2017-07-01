@@ -102,6 +102,10 @@ public class Character : IXmlSerializable{
         myJob.UnregisterJobCancelCallback(OnJobEnded);
         myJob.UnregisterJobCompleteCallback(OnJobEnded);
         myJob = null;
+
+        if (inventory != null) {
+            currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
+        }
     }
 
     private void GeneratePath()
@@ -176,15 +180,21 @@ public class Character : IXmlSerializable{
         myJob.RegisterJobCancelCallback(OnJobEnded);
         destTile = myJob.tile;
 
-        GeneratePath();
-
-        if (path.Length() == 0) {
-            Debug.LogError("Could not reach job site!");
+        if (currTile.world.inventoryManager.GetClosestInventoryOfType(myJob.GetFirstDesiredInventory().objectType, currTile) == null) {
             AbandonJob();
             path = null;
             destTile = currTile;
             return;
         }
+        GeneratePath();
+
+        if (path.Length() == 0 ) {
+            Debug.LogError("Could not reach job site!");
+            AbandonJob();
+            path = null;
+            destTile = currTile;
+            return;
+        } 
 
     }
 
@@ -199,11 +209,9 @@ public class Character : IXmlSerializable{
                 destTile = currTile;
                 return;
             }
-            
         }
         // We have a job! And it's reachable.
-
-
+        
         if (myJob.HasAllMaterials() == false) {
             //we're missing something!
             if (inventory != null && inventory.stackSize > 0) {
@@ -239,9 +247,9 @@ public class Character : IXmlSerializable{
                         AbandonJob();
                         return;
                     }
-                    if (inventory == null) {
+                    inventory = desired;
+                    inventory.character = this;
 
-                    }
                     destTile = supplier.tile;
                     return;
                 }

@@ -26,7 +26,6 @@ public class InventorySpriteController : MonoBehaviour
         // Register our callback so that our GameObject gets updated whenever
         // the tile's type changes.
         world.inventoryManager.RegisterInventoryCreated(OnInventoryCreated);
-        world.inventoryManager.RegisterInventoryChanged(OnInventoryChanged);
         world.inventoryManager.RegisterInventoryRemoved(OnInventoryRemoved);
 
         // Check for pre-existing inventory, which won't do the callback.
@@ -42,31 +41,43 @@ public class InventorySpriteController : MonoBehaviour
 
     private void OnInventoryRemoved(Inventory inv)
     {
-        Debug.Log("OnInventoryRemoved");
+        Debug.Log("OnInventoryRemoved:- " + inv);
         //do something here to make it disappear.
         if (inventoryGameObjectMap.ContainsKey(inv)) {
             GameObject go = inventoryGameObjectMap[inv];
             inventoryGameObjectMap.Remove(inv);
-            foreach (GameObject each_go in go.GetComponentsInChildren<GameObject>()) {
-                Destroy(each_go);
-            }
+            DestroyAllChildren(go.transform);
 
             Destroy(go);
             Debug.Log("InventoryRemoved - did sum destructions.");
         } else {
             //where is it and how much should i delete?
         }
+        inv.UnregisterInventoryChanged(OnInventoryChanged);
+    }
+
+
+    private void DestroyAllChildren(Transform go)
+    {
+        foreach (Transform each_go in go.GetComponents<Transform>()) {
+            if (each_go.GetComponents<Transform>().Length > 0) {
+                foreach (Transform baby in go.GetComponents<Transform>()) {
+                    DestroyAllChildren(baby);
+                }
+            }
+            GameObject.Destroy(each_go);
+        }
     }
 
     private void OnInventoryCreated(Inventory inv) {
-        Debug.Log("OnInventoryCreated");
+        Debug.Log("OnInventoryCreated:- " + inv);
         // Create a visual GameObject linked to this data.
 
         // FIXME: Does not consider multi-tile objects nor rotated objects
 
         // This creates a new GameObject and adds it to our scene.
         GameObject inv_go = new GameObject();
-
+        inv.RegisterInventoryChanged(OnInventoryChanged);
         // Add our tile/GO pair to the dictionary.
         inventoryGameObjectMap.Add(inv, inv_go);
 
@@ -98,11 +109,11 @@ public class InventorySpriteController : MonoBehaviour
     public void OnInventoryChanged(Inventory inv) {
         // FIXME:  Still needs to work!  And get called!
 
-        Debug.Log("OnInventoryChanged");
+        Debug.Log("OnInventoryChanged:- " + inv);
         // Make sure the inventory's graphics are correct.
 
-        if (!inventoryGameObjectMap.ContainsKey(inv) || inventoryGameObjectMap.) {
-            Debug.LogError("OnInventoryChanged -- trying to change visuals for inventory not in our map.");
+        if (!inventoryGameObjectMap.ContainsKey(inv)) {
+            Debug.LogError("OnInventoryChanged -- trying to change visuals for inventory not in our map??");
             return;
         }
 
@@ -111,8 +122,7 @@ public class InventorySpriteController : MonoBehaviour
         //gotta make some kind of decision for when the character is carrying the items?
 
         inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
-        
-        inv_go.GetComponentInChildren<Text>().text = "" + inv.stackSize;
+        inv_go.transform.GetComponentInChildren<Text>().text = "" + inv.stackSize;
     }
 
 

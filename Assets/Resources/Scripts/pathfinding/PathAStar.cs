@@ -100,7 +100,7 @@ public class PathAStar {
 
         
         path = new Queue<Tile>( properPath.Reverse());
-        Debug.Log("Created a path that was " + path.Count + " tiles long") ;
+        Debug.Log("Created a path that was " + path.Count + " tiles long. FROM:" + properPath.First<Tile>() + " TO:" + properPath.Last<Tile>()) ;
     }
 
 

@@ -26,7 +26,8 @@ public class Inventory {
         set
         {
             _stackSize = value;
-            cbInventoryChanged(this);
+            if (cbInventoryChanged != null) 
+                cbInventoryChanged(this);
         }
     }
 
@@ -35,6 +36,7 @@ public class Inventory {
     ////inventory is either on the floor in tile or on a character!
     public Tile tile;
     public Character character;
+    public Job job;
     private Action<Inventory> cbInventoryChanged;
 
     public Inventory() {
@@ -56,6 +58,8 @@ public class Inventory {
             tile = other.tile;
         if (other.character != null)
             character = other.character;
+        if (other.job != null)
+            job = other.job;
         number = nextInv;
     }
 
@@ -66,7 +70,14 @@ public class Inventory {
 
     override public string ToString()
     {
-        return "" + number + ":" + objectType + ":" + stackSize + "/" + maxStackSize;
+        string loc = "";
+        if (character != null)
+            loc += "C";
+        if (job != null)
+            loc += "J";
+        if (tile != null)
+            loc += "T";
+        return "" + number + "/" + loc + " : " + objectType + ":" + stackSize + "/" + maxStackSize;
     }
 
     public void RegisterInventoryChanged(Action<Inventory> callbackfunc)

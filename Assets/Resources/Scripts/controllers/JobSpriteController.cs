@@ -17,7 +17,7 @@ public class JobSpriteController : MonoBehaviour {
 	void OnJobCreated(Job j) {
 
         if (jobGameObjectMap.ContainsKey(j)) {
-            Debug.Log("OnJObCreated for a job sprite that already exists. Most likely caused by requeueing");
+            Debug.Log("OnJObCreated:- for a job sprite that already exists. Most likely caused by requeueing");
             return;
         }
 

@@ -13,8 +13,10 @@ public class InventoryManager  {
         inventories = new Dictionary<string, List<Inventory>>();
     }
 
-    private void ClearEmptyInventory(Inventory inv)
+    private void CleanUpInventory(Inventory inv)
     {
+        if (inv.stackSize > 0)
+            return;
         if (inv.stackSize == 0 && inventories.ContainsKey(inv.objectType)) {
             inventories[inv.objectType].Remove(inv);
             cbInventoryRemoved(inv);
@@ -28,12 +30,16 @@ public class InventoryManager  {
                 inv.character = null;
             }
             //if (inv.job != null) {
-
+            // inv.job.inventories.Remove(inv);
+            // inv.job = null;
             //}
+        } else if (inv.stackSize == 0) {
+            Debug.Log("InventoryManager:- Have an inventory that I didn't know about! What do?");
         }
-
+        
         inv.UnregisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
         inv = null;
+
     }
 
 
@@ -54,6 +60,11 @@ public class InventoryManager  {
     {
         bool tileWasEmpty = tile.inventory == null;
 
+
+        if (inv == null) {
+            Debug.LogError("Trying to place a null inventory into a tile");
+            return false;
+        }
         int inv_stackSize = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
             //the tile rejected the inventory.
@@ -63,74 +74,76 @@ public class InventoryManager  {
         
         if (tile.inventory != null && inv.stackSize != inv_stackSize) {
             //how would inv change if there was no tile inventory?
+            Debug.Log("Placed something on a tile.");
             cbInventoryChanged(tile.inventory);
         }
 
         // At this point, "inv" might be an empty stack if it was merged to another stack.
-        if (inv.stackSize == 0) {
-            ClearEmptyInventory(inv);
-        }
+        CleanUpInventory(inv);
 
         // We may also created a new stack on the tile, if the tile was previously empty.
-
-        //little unsure if this logic isn't actually duplicating somehow?
         if (tileWasEmpty) {
             if (inventories.ContainsKey(tile.inventory.objectType) == false) {
-                inventories[tile.inventory.objectType] = new List<Inventory>();
+                //first time placing this kind of object.
+                inventories[tile.inventory.objectType] = new List<Inventory>(); 
             }
-
             inventories[tile.inventory.objectType].Add(tile.inventory);
             Debug.Log("Inventory Manager:- Placed new inventory:-" + tile.inventory + " on tile :- " + tile);
+            //callbacks
             if (cbInventoryCreated != null) {
                 cbInventoryCreated(tile.inventory);
                 tile.inventory.RegisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
             }
-                
         }
-        Debug.Log("inventories:-" + PrintInventories());
+        //Debug.Log("inventories:-" + PrintInventories());
         return true;
     }
 
     public bool PlaceInventory(Job job, Inventory inv, int amount=-1) {
 
-        if (job.DesiresInventory(inv) < 0) {
+        if (job.DesiresInventory(inv) <= 0) {
             Debug.LogError("Tried to give a job an inventory item it didn;t need.");
         }
-        ChangeInventory(job.inventoryRequirements[inv.objectType], job.inventoryRequirements[inv.objectType].stackSize + inv.stackSize);
+
+        //put all of inventory into job site.
+        job.inventoryRequirements[inv.objectType].stackSize += inv.stackSize;
+
+
         if (job.inventoryRequirements[inv.objectType].maxStackSize < job.inventoryRequirements[inv.objectType].stackSize) {
-            ChangeInventory(inv, job.inventoryRequirements[inv.objectType].stackSize - job.inventoryRequirements[inv.objectType].maxStackSize);
-            ChangeInventory(job.inventoryRequirements[inv.objectType], job.inventoryRequirements[inv.objectType].maxStackSize);
-           
+            inv.stackSize = job.inventoryRequirements[inv.objectType].stackSize - job.inventoryRequirements[inv.objectType].maxStackSize;
+            job.inventoryRequirements[inv.objectType].stackSize = job.inventoryRequirements[inv.objectType].maxStackSize;
         } else {
             //already put stuff into job inventory so clear the other!
-            ChangeInventory(inv, 0);
+            inv.stackSize = 0;
         }
 
-        if (inv.stackSize == 0) {
-            ClearEmptyInventory(inv);
-        }
-
-
+        CleanUpInventory(inv);
+        
         return true;
     }
 
     public bool PlaceInventory(Character character, Inventory srcInv, int amount = -1)
     {
+        //if (character.inventory == null) {
+        //    character.inventory = srcInv.Clone();
+        //    character.inventory.tile = null;
+        //    character.inventory.stackSize = 0;
+        //    inventories[character.inventory.objectType].Add(character.inventory);
+        //}
         if (character.inventory == null) {
-            character.inventory = srcInv.Clone();
-            ChangeInventory(character.inventory, 0);
-            inventories[character.inventory.objectType].Add(character.inventory);
+            Debug.Log("Character has no inventory to place into.");
+            return false;
         }
-        ChangeInventory(character.inventory, character.inventory.stackSize + srcInv.stackSize);
+        character.inventory.stackSize += srcInv.stackSize;
 
         if(character.inventory.maxStackSize < character.inventory.stackSize) {
-            ChangeInventory(srcInv, character.inventory.stackSize - character.inventory.maxStackSize);
-            ChangeInventory(character.inventory, character.inventory.maxStackSize);
+            srcInv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
+            character.inventory.stackSize = character.inventory.maxStackSize;
+        } else {
+            srcInv.stackSize = 0;
         }
        
-        if (srcInv.stackSize == 0) {
-            ClearEmptyInventory(srcInv);
-        }
+        CleanUpInventory(srcInv);
         return true;
     }
 
@@ -142,9 +155,11 @@ public class InventoryManager  {
     /// <param name="t"></param>
     /// <param name="desiredAmount">Desired Amount. If no stack has enough it returns the largest</param>
     /// <returns></returns>
-    public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount)
+    public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount=-1)
     {
-
+        if (desiredAmount == -1) {
+            desiredAmount = 1; //FIXME: A bit silly hardcode so i can just check if there's ANY pile around
+        }
         //FIXME: lies aout the closest item
         if (inventories.ContainsKey(objectType) == false)
             return null;
@@ -152,6 +167,7 @@ public class InventoryManager  {
         foreach (Inventory inv in inventories[objectType])
 	    {
             if (inv.tile != null) {
+                //if it's ona tile.
                 return inv;
             }
 	    }
