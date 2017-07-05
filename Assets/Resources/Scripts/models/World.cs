@@ -122,14 +122,18 @@ public class World : IXmlSerializable
         furnitureProto = new Dictionary<string, Furniture>();
         furnitureJobPrototypes = new Dictionary<string, Job>();
         
-        furnitureProto.Add("wall", new Furniture("wall", 0f, true, 1, 1,true));
+        furnitureProto.Add("wall", new Furniture("wall", 0f, 1, 1, true, true));
         furnitureJobPrototypes.Add("wall", 
-            new Job(null, "wall", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("steel plate", 5, 0) })
+            new Job(null, "wall", 
+            FurnitureActions.JobComplete_FurnitureBuilding, 
+            //null,
+            1f, 
+            new Inventory[] { new Inventory("steel plate", 5, 0) })
             );
 
 
 
-        furnitureProto.Add("door", new Furniture("door", 1.5f, true, 1, 1, false));
+        furnitureProto.Add("door", new Furniture("door", 1.5f, 1, 1, false, true));
 
         furnitureProto["door"].furnParameters["openness"] = 0;
         furnitureProto["door"].furnParameters["is_opening"] = 0;
@@ -138,8 +142,35 @@ public class World : IXmlSerializable
         furnitureProto["door"].IsEnterable = FurnitureActions.Door_IsEnterable;
 
         furnitureJobPrototypes.Add("door",
-             new Job(null, "door", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("steel plate", 5, 0) })
+             new Job(null, "door", 
+             FurnitureActions.JobComplete_FurnitureBuilding, 
+             //null,
+             1f, 
+             new Inventory[] { new Inventory("steel plate", 5, 0)
+             })
              );
+
+
+        furnitureProto.Add("stockpile", 
+            new Furniture(
+                "stockpile", 
+                0f, 
+                1, 
+                1, 
+                true,
+                false));
+
+        furnitureProto["stockpile"].updateActions += FurnitureActions.Stockpile_UpdateAction;
+        furnitureProto["stockpile"].movementCost = 1f;
+
+        furnitureJobPrototypes.Add("stockpile",
+            new Job(null, "stockpile", 
+            FurnitureActions.JobComplete_FurnitureBuilding,
+            //null,
+            -1f, 
+            null)
+            );
+
     }
 
     public Tile GetTileAt(int x, int y) {

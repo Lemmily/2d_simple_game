@@ -46,7 +46,7 @@ public class WorldController : MonoBehaviour {
     public void PlaceInventory()
     {
         //FIXME: Just for testung places 10 steel plate at 50,50.
-       PlaceInventory(GetTileAtWorldCoord(new Vector3(50, 50, 0)), new Inventory("steel plate", 50, 10));
+       PlaceInventory(GetTileAtWorldCoord(new Vector3(50, 50, 0)), new Inventory("steel plate", 50, 7));
     }
 
     public bool PlaceInventory(Tile tile, Inventory inventory)

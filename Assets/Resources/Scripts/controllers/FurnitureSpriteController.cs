@@ -149,7 +149,11 @@ public class FurnitureSpriteController : MonoBehaviour
             }
         }
 
-        
+
+        if (furn.objectType == "stockpile") {
+            spriteName = "stockpile";
+        }
+
         try {
 
             return ResourceLoader.instance.furnitureSpriteMap[spriteName];

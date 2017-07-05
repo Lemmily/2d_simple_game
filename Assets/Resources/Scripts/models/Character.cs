@@ -48,7 +48,8 @@ public class Character : IXmlSerializable{
 
     Job myJob;
     public Inventory inventory;
-    private int maxStackSize;
+    private int maxStackSize; //could be used in future to limit the amount units carried?
+    //think in future I will want to make a weight limit for each character. LIKE RIMWORLD.
 
     public Character(Tile tile) {
         currTile = tile;
@@ -168,6 +169,25 @@ public class Character : IXmlSerializable{
 
     //}
 
+    void OnJobEnded(Job j)
+    {
+        //Job completed or cancelled.
+        if (j != myJob) {
+            Debug.Log("Character being told about job  thats not his. Maybe unregister something?");
+            return;
+        }
+
+        myJob = null;
+
+
+        if (inventory != null) {
+            currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
+            if (inventory != null) {
+                Debug.LogError("Trying to get rid of character inventory failed. SMUSHING");
+                inventory = null;
+            }
+        }
+    }
 
     private void GetNewJob() {
 
@@ -176,10 +196,13 @@ public class Character : IXmlSerializable{
         if (myJob == null)
             return;
 
+
+        //Same results for either.
         myJob.RegisterJobCompleteCallback(OnJobEnded);
         myJob.RegisterJobCancelCallback(OnJobEnded);
         destTile = myJob.tile;
 
+        //If I can't find any items for this job, cancel it!
         if (currTile.world.inventoryManager.GetClosestInventoryOfType(myJob.GetFirstDesiredInventory().objectType, currTile) == null) {
             AbandonJob();
             path = null;
@@ -202,73 +225,92 @@ public class Character : IXmlSerializable{
         // Do I have a job?
         if (myJob == null) {
             // Grab a new job.
-
             GetNewJob();
 
             if (myJob == null) {
+                //I couldn't get a new job.
                 destTile = currTile;
                 return;
             }
         }
         // We have a job! And it's reachable.
-        
+
         if (myJob.HasAllMaterials() == false) {
-            //we're missing something!
-            if (inventory != null && inventory.stackSize > 0) {
-                //Im already carrying something
-                //check to see if what I'm carrying is something the job needs.
-                if (myJob.DesiresInventory(inventory) > 0) {
-
-                    if (currTile == myJob.tile) {
-                        //myJob.inventoryRequirements[inventory.objectType];
-                        currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
-                    }
-                    else {
-                        destTile = myJob.tile;
-                    }
-                }
-                //otherwise, drop/stockpile it?
-            }
-            else {
-
-                if (currTile.inventory != null && (myJob.DesiresInventory(currTile.inventory) > 0)) {
-                    currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
-                }
-                else {
-
-                    Inventory desired = myJob.GetFirstDesiredInventory();
-                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(
-                        desired.objectType,
-                        currTile,
-                        desired.maxStackSize - desired.stackSize
-                        );
-                    if (supplier == null) {
-                        Debug.Log("No tile available containing objects of " + desired.objectType + " available");
-                        AbandonJob();
-                        return;
-                    }
-                    inventory = desired;
-                    inventory.character = this;
-
-                    destTile = supplier.tile;
-                    return;
-                }
-            }
+            GetJobMaterials();
             return; // we can't get further until we have all items
         }
-        destTile = myJob.tile;
 
-        // Are we there yet?
-        //if (myJob != null && currTile == myJob.tile) {
-        if (nextTile != null && currTile != null) { 
-            if (myJob!= null && (Mathf.Abs(x - myJob.tile.X) <= 1 && (Mathf.Abs(y - myJob.tile.Y) <= 1))) {
-                myJob.DoWork(deltaTime);
-                path = null; // stop pathing causde its close enough
-            }
+        // Are we there yet and we can't get here unless the job has all items.
+        if (currTile.IsNeighbour(myJob.tile) || currTile == myJob.tile) { 
+            //if ((Mathf.Abs(x - myJob.tile.X) <= 1 && (Mathf.Abs(y - myJob.tile.Y) <= 1))) {
+            myJob.DoWork(deltaTime);
+            path = null; // stop pathing causde its close enough
+            //discard inventory?
+            if (inventory != null)
+                currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
         }
-
     }
 
+    
+
+
+    public void GetJobMaterials()
+    {
+        //we're missing something!
+        if (inventory != null && inventory.stackSize > 0) {
+            //Im already carrying something
+            //check to see if what I'm carrying is something the job needs.
+            if (myJob.DesiresInventory(inventory) > 0) {
+                if (currTile == myJob.tile || currTile.IsNeighbour(myJob.tile)) {
+                    //myJob.inventoryRequirements[inventory.objectType];
+                    currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
+                    myJob.DoWork(0);
+                }
+                else {
+                    destTile = myJob.tile;
+                }
+            }
+            else {
+                //otherwise, drop/stockpile it?
+                currTile.world.inventoryManager.PlaceInventory(currTile.GetNeighbours(true)[0], inventory);
+            }
+        }
+        else {
+
+            if (inventory == null ) {
+                FindNextJobMaterial();
+            }
+
+            //pickup the inventory off the floor.
+            if (inventory != null && currTile.inventory != null && (myJob.DesiresInventory(currTile.inventory) > 0)) {
+                currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
+            } else if (nextTile != currTile && nextTile.IsNeighbour(currTile) && nextTile.inventory != null) {
+                currTile.world.inventoryManager.PlaceInventory(this, nextTile.inventory);
+            }
+        }
+    }
+
+    public void FindNextJobMaterial()
+    {
+        Inventory desired = myJob.GetFirstDesiredInventory();
+        Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(
+            desired.objectType,
+            currTile,
+            desired.maxStackSize - desired.stackSize
+            );
+        if (supplier == null) {
+            Debug.Log("No tile available containing objects of " + desired.objectType + " available");
+            AbandonJob();
+            return;
+        }
+        inventory = desired.Clone();
+        inventory.stackSize = 0;
+        inventory.maxStackSize = Mathf.Min(desired.maxStackSize - desired.stackSize, maxStackSize); //
+        inventory.character = this;
+
+        destTile = supplier.tile;
+        return;
+    }
 
     public override string ToString()
     {
@@ -276,7 +318,7 @@ public class Character : IXmlSerializable{
     }
 
     void Update_DoMovement(float deltaTime) {
-        if (currTile == destTile) {
+        if (currTile == destTile || destTile.IsNeighbour(currTile)) {
             path = null;
             return; // We're already were we want to be.
         }
@@ -302,10 +344,10 @@ public class Character : IXmlSerializable{
 
             // Grab the next waypoint from the pathing system!
             nextTile = path.Dequeue();
-            if (nextTile == currTile) {
-                //we're now next to our destination "one tile over".
-                Debug.LogError("Update_DoMovement - grabbing next waypoint but nextTile is currTile?" + nextTile + "\n cur: " + currTile);
-            }
+            //if (nextTile == currTile) {
+            //    //we're now next to our destination "one tile over".
+            //    Debug.Log("Update_DoMovement - grabbing next waypoint but nextTile is currTile?" + nextTile + "\n cur: " + currTile);
+            //}
         }
 
         /*		if(pathAStar.Length() == 1) {
@@ -375,15 +417,6 @@ public class Character : IXmlSerializable{
         cbPathChanged -= cb;
     }
 
-    void OnJobEnded(Job j) {
-        //Job completed or cancelled.
-        if(j != myJob) {
-            Debug.Log("Character being told about job  thats not his. Maybe unregister something?");
-            return;
-        }
-
-        myJob = null;
-    }
 
     public XmlSchema GetSchema()
     {

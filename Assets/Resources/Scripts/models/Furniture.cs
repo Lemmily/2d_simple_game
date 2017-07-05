@@ -48,22 +48,12 @@ public class Furniture : IXmlSerializable
 
     public bool linksToNeighbour { get; protected set; }
 
-    public void Update(float deltaTime) {
-        //if (doorIsOpening) {
-        //    openness += deltaTime / doorOpenTime;
-        //} else {
-        //    openness -= deltaTime / doorOpenTime; 
-        //}
+    List<Job> jobs;
 
-        //openness = Mathf.Clamp01(openness);
-
-        if (updateActions != null)
-            updateActions(this, deltaTime);
-
-    }
 
     public Furniture() {
         this.furnParameters = new Dictionary<string, float>();
+        jobs = new List<Job>();
     }
 
     public Furniture(Furniture other) {
@@ -73,6 +63,8 @@ public class Furniture : IXmlSerializable
         this.width = other.width;
         this.height = other.height;
         this.linksToNeighbour = other.linksToNeighbour;
+
+        this.jobs = new List<Job>();
 
         this.furnParameters = new Dictionary<string, float>(other.furnParameters);
 
@@ -84,7 +76,7 @@ public class Furniture : IXmlSerializable
 
     }
 
-    public Furniture(string objectType, float movementCost = 1f, bool roomEnclosing=false, int width = 1, int height = 1, bool linksToNeighbour = false) {
+    public Furniture(string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false, bool roomEnclosing= false) {
         //Furniture obj = new Furniture();
         this.objectType = objectType;
         this.movementCost = movementCost;
@@ -101,8 +93,23 @@ public class Furniture : IXmlSerializable
 
     public virtual Furniture Clone() {
         return new Furniture(this);
-    } 
-    
+    }
+
+    public void Update(float deltaTime)
+    {
+        //if (doorIsOpening) {
+        //    openness += deltaTime / doorOpenTime;
+        //} else {
+        //    openness -= deltaTime / doorOpenTime; 
+        //}
+
+        //openness = Mathf.Clamp01(openness);
+
+        if (updateActions != null)
+            updateActions(this, deltaTime);
+
+    }
+
     public static Furniture PlaceInstance(Furniture proto, Tile tile) {
         if( ! proto.funcPositionValidation(tile)) {
             Debug.LogError("Place instance - couldn't place item here");
@@ -220,5 +227,31 @@ public class Furniture : IXmlSerializable
             } while (reader.ReadToNextSibling("Params"));
         }
 
+    }
+
+    public int JobCount()
+    {
+        return jobs.Count;
+    }
+
+    public void AddJob(Job j)
+    {
+        jobs.Add(j);
+        tile.world.jobQueue.Enqueue(j);
+    }
+
+    public void RemoveJob(Job j)
+    {
+        jobs.Remove(j);
+        j.CancelJob();
+        tile.world.jobQueue.Remove(j);
+    }
+
+    public void ClearJobs()
+    {
+        foreach (Job job in jobs) {
+            RemoveJob(job);
+        }
+        
     }
 }

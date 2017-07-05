@@ -49,7 +49,13 @@ public class BuildModeController : MonoBehaviour
                     j.tile = t;
                 } else {
                     Debug.LogError("No job furniture job prototypr for this object: " + furnitureType);
-                    j = new Job(t, furnitureType, FurnitureActions.JobComplete_FurnitureBuilding, 0.1f, null);
+                    j = new Job(
+                        t, 
+                        furnitureType, 
+                        FurnitureActions.JobComplete_FurnitureBuilding,
+                        //null,
+                        0.1f, 
+                        null);
                 }
                 
                 

@@ -19,7 +19,7 @@ public class InventoryManager  {
             return;
         if (inv.stackSize == 0 && inventories.ContainsKey(inv.objectType)) {
             inventories[inv.objectType].Remove(inv);
-            cbInventoryRemoved(inv);
+            //cbInventoryRemoved(inv);
 
             if (inv.tile != null) {
                 inv.tile.inventory = null;
@@ -59,8 +59,7 @@ public class InventoryManager  {
     public bool PlaceInventory (Tile tile, Inventory inv, int amount = -1)
     {
         bool tileWasEmpty = tile.inventory == null;
-
-
+        
         if (inv == null) {
             Debug.LogError("Trying to place a null inventory into a tile");
             return false;
@@ -92,7 +91,6 @@ public class InventoryManager  {
             //callbacks
             if (cbInventoryCreated != null) {
                 cbInventoryCreated(tile.inventory);
-                tile.inventory.RegisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
             }
         }
         //Debug.Log("inventories:-" + PrintInventories());
@@ -124,23 +122,29 @@ public class InventoryManager  {
 
     public bool PlaceInventory(Character character, Inventory srcInv, int amount = -1)
     {
-        //if (character.inventory == null) {
-        //    character.inventory = srcInv.Clone();
-        //    character.inventory.tile = null;
-        //    character.inventory.stackSize = 0;
-        //    inventories[character.inventory.objectType].Add(character.inventory);
-        //}
+        if (amount == -1) {
+            amount = srcInv.stackSize;
+        } else {
+            amount = Mathf.Min(amount, srcInv.stackSize);
+        }
+
+
         if (character.inventory == null) {
-            Debug.Log("Character has no inventory to place into.");
+            Debug.Log("Character has no inventory to place into. Character's Job should have made one for it.");
+            return false;
+        } else if (character.inventory.objectType != srcInv.objectType) {
+            //FIXME: make it so the character takes it's uneeded items and stores them elsewhere. Stack based FSM FTW here.
+            Debug.LogError("Character already has an inventory of a different type. Cannot pick up items");
             return false;
         }
-        character.inventory.stackSize += srcInv.stackSize;
+
+        character.inventory.stackSize += amount;
 
         if(character.inventory.maxStackSize < character.inventory.stackSize) {
             srcInv.stackSize = character.inventory.stackSize - character.inventory.maxStackSize;
             character.inventory.stackSize = character.inventory.maxStackSize;
         } else {
-            srcInv.stackSize = 0;
+            srcInv.stackSize -= amount;
         }
        
         CleanUpInventory(srcInv);

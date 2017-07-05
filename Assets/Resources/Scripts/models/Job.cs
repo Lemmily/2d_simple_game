@@ -6,21 +6,36 @@ public class Job{
 
 
     public Tile tile;
-    float jobTime;
+    public float JobTime
+    {
+        get;
+        protected set;
+    }
 
     //Action<T> cbJob;
     Action<Job> cbJobComplete;
+    Action<Job> cbJobWorked;
     Action<Job> cbJobCancel;
-    public Dictionary<string, Inventory> inventoryRequirements;    
+    public Dictionary<string, Inventory> inventoryRequirements;
 
-    public string theFurniture { get; protected set;  }
+    public int proximityToComplete = 1; //how close should a character be to complete 0 - on tile, 1 adjacent tile.
+    public bool acceptsAnyInventoryItem;
 
-    public Job (Tile tile, string jobObjectType, Action<Job> cbJobComplete, 
-                                    float jobTime, Inventory[] inventoryRequirements) {
+    public string jobObjectType { get; protected set;  }
+
+    public Job (Tile tile, 
+            string jobObjectType, 
+            Action<Job> cbJobComplete,
+            //Action<Job> cbJobWorked,
+            float jobTime, 
+            Inventory[] inventoryRequirements
+        )
+    {
         this.tile = tile;
         this.cbJobComplete += cbJobComplete;
-        this.jobTime = jobTime;
-        this.theFurniture = jobObjectType;
+        //this.cbJobWorked += cbJobWorked;
+        this.JobTime = jobTime;
+        this.jobObjectType = jobObjectType;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (inventoryRequirements != null) {
@@ -32,17 +47,15 @@ public class Job{
         //inv.objectType = "Steel PLate"; //type required.
         //inv.maxStackSize = 5; //num required to complete job
         //inventoryRequirements["Steel Plate"] = inv;
-
-
-
+        
     }
 
     protected Job(Job job) {
         this.tile = job.tile;
         
         this.cbJobComplete += job.cbJobComplete;
-        this.jobTime = job.jobTime;
-        this.theFurniture = job.theFurniture;
+        this.JobTime = job.JobTime;
+        this.jobObjectType = job.jobObjectType;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (job.inventoryRequirements != null) {
@@ -64,19 +77,34 @@ public class Job{
         cbJobComplete -= cb;
     }
 
-    public void RegisterJobCancelCallback(Action<Job> cb) {
+    public void RegisterJobCancelCallback(Action<Job> cb)
+    {
         cbJobCancel += cb;
     }
 
-
-    public void UnregisterJobCancelCallback(Action<Job> cb) {
+    public void UnregisterJobCancelCallback(Action<Job> cb)
+    {
         cbJobCancel -= cb;
+    }
+    public void RegisterJobWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked += cb;
+    }
+
+
+    public void UnregisterJobWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked -= cb;
     }
 
     public void DoWork(float workTime) {
-        jobTime -= workTime;
+        JobTime -= workTime;
 
-        if (jobTime <= 0) {
+        if (cbJobWorked != null) {
+            cbJobWorked(this);
+        }
+
+        if (JobTime <= 0) {
             if(cbJobComplete != null) 
                 cbJobComplete(this);
         }
@@ -85,6 +113,8 @@ public class Job{
     public void CancelJob() {
         if (cbJobCancel != null)
             cbJobCancel(this);
+
+        tile.world.jobQueue.Remove(this);
     }
 
     public bool HasAllMaterials() {
@@ -99,6 +129,11 @@ public class Job{
 
 
     public int DesiresInventory(Inventory inv) {
+        if (acceptsAnyInventoryItem) {
+            return inv.maxStackSize;
+        }
+
+
         if (inventoryRequirements.ContainsKey(inv.objectType) == false) {
             return 0;
         }

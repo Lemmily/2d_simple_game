@@ -26,7 +26,7 @@ public class InventorySpriteController : MonoBehaviour
         // Register our callback so that our GameObject gets updated whenever
         // the tile's type changes.
         world.inventoryManager.RegisterInventoryCreated(OnInventoryCreated);
-        world.inventoryManager.RegisterInventoryRemoved(OnInventoryRemoved);
+        //world.inventoryManager.RegisterInventoryRemoved(OnInventoryRemoved);
 
         // Check for pre-existing inventory, which won't do the callback.
         foreach (string objectType in world.inventoryManager.inventories.Keys) {
@@ -39,35 +39,35 @@ public class InventorySpriteController : MonoBehaviour
         //c.SetDestination( world.GetTileAt( world.Width/2 + 5, world.Height/2 ) );
     }
 
-    private void OnInventoryRemoved(Inventory inv)
-    {
-        Debug.Log("OnInventoryRemoved:- " + inv);
-        //do something here to make it disappear.
-        if (inventoryGameObjectMap.ContainsKey(inv)) {
-            GameObject go = inventoryGameObjectMap[inv];
-            inventoryGameObjectMap.Remove(inv);
-            DestroyAllChildren(go.transform);
+    //private void OnInventoryRemoved(Inventory inv)
+    //{
+    //    Debug.Log("OnInventoryRemoved:- " + inv);
+    //    //do something here to make it disappear.
+    //    if (inventoryGameObjectMap.ContainsKey(inv)) {
+    //        GameObject go = inventoryGameObjectMap[inv];
+    //        inventoryGameObjectMap.Remove(inv);
+    //        DestroyAllChildren(go.transform);
 
-            Destroy(go);
-            Debug.Log("InventoryRemoved - did sum destructions.");
-        } else {
-            //where is it and how much should i delete?
-        }
-        inv.UnregisterInventoryChanged(OnInventoryChanged);
-    }
+    //        Destroy(go);
+    //        Debug.Log("InventoryRemoved - did sum destructions.");
+    //    } else {
+    //        //where is it and how much should i delete?
+    //    }
+    //    inv.UnregisterInventoryChanged(OnInventoryChanged);
+    //}
 
 
-    private void DestroyAllChildren(Transform go)
-    {
-        foreach (Transform each_go in go.GetComponents<Transform>()) {
-            if (each_go.GetComponents<Transform>().Length > 0) {
-                foreach (Transform baby in go.GetComponents<Transform>()) {
-                    DestroyAllChildren(baby);
-                }
-            }
-            GameObject.Destroy(each_go);
-        }
-    }
+    //private void DestroyAllChildren(Transform go)
+    //{
+    //    foreach (Transform each_go in go.GetComponents<Transform>()) {
+    //        if (each_go.GetComponents<Transform>().Length > 0) {
+    //            foreach (Transform baby in go.GetComponents<Transform>()) {
+    //                DestroyAllChildren(baby);
+    //            }
+    //        }
+    //        GameObject.Destroy(each_go);
+    //    }
+    //}
 
     private void OnInventoryCreated(Inventory inv) {
         Debug.Log("OnInventoryCreated:- " + inv);
@@ -77,7 +77,6 @@ public class InventorySpriteController : MonoBehaviour
 
         // This creates a new GameObject and adds it to our scene.
         GameObject inv_go = new GameObject();
-        inv.RegisterInventoryChanged(OnInventoryChanged);
         // Add our tile/GO pair to the dictionary.
         inventoryGameObjectMap.Add(inv, inv_go);
 
@@ -102,7 +101,7 @@ public class InventorySpriteController : MonoBehaviour
         // Register our callback so that our GameObject gets updated whenever
         // the object's into changes.
         // FIXME: Add on changed callbacks
-        //inv.RegisterOnChangedCallback( OnInventoryChanged );
+        inv.RegisterInventoryChanged(OnInventoryChanged);
 
     }
 
@@ -121,8 +120,17 @@ public class InventorySpriteController : MonoBehaviour
 
         //gotta make some kind of decision for when the character is carrying the items?
 
-        inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
-        inv_go.transform.GetComponentInChildren<Text>().text = "" + inv.stackSize;
+        if (inv.stackSize > 0) {
+
+            inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
+            Text t = inv_go.transform.GetComponentInChildren<Text>();
+            if (t != null)
+                t.text = "" + inv.stackSize;
+        } else {
+            Destroy(inv_go);
+            inventoryGameObjectMap.Remove(inv);
+            inv.UnregisterInventoryChanged(OnInventoryChanged);
+        }
     }
 
 
