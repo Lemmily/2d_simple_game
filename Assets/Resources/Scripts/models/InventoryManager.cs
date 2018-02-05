@@ -170,11 +170,34 @@ public class InventoryManager  {
 
         foreach (Inventory inv in inventories[objectType])
 	    {
-            if (inv.tile != null) {
+            if (inv.tile != null ) {
                 //if it's ona tile.
                 return inv;
             }
 	    }
+
+        return null;
+    }
+    public Inventory GetClosestLooseInventoryOfType(string objectType, Tile t, int desiredAmount = -1)
+    {
+        //NOT in a stockpile!!
+
+        if (desiredAmount == -1) {
+            desiredAmount = 1; //FIXME: A bit silly hardcode so i can just check if there's ANY pile around
+        }
+        //FIXME: lies aout the closest item
+        if (inventories.ContainsKey(objectType) == false)
+            return null;
+
+        foreach (Inventory inv in inventories[objectType]) {
+            if (inv.tile != null) {
+                //if it's ona tile.
+
+                if (inv.tile.furniture != null && inv.tile.furniture.IsStockpile())
+                    return null; // not loose!
+                return inv; //yay loose inventory
+            }
+        }
 
         return null;
     }

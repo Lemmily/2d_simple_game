@@ -254,4 +254,10 @@ public class Furniture : IXmlSerializable
         }
         
     }
+
+
+    public bool IsStockpile()
+    {
+        return objectType == "stockpile";
+    }
 }

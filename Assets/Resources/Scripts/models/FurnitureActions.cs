@@ -77,15 +77,19 @@ public class FurnitureActions {
 
         Inventory[] itemsDesired;
         if (furn.tile.inventory == null) {
+            Debug.Log("Stockpile:- Creating job for new stack.");
             itemsDesired = Stockpile_GetItemsFromFilter();
 
-        } else { 
+        } else {
+            Debug.Log("Stockpile:-Creating job for existing stack.");
             Inventory desInv = furn.tile.inventory.Clone();
             desInv.maxStackSize -= desInv.stackSize;
             desInv.stackSize = 0;
             itemsDesired = new Inventory[] { desInv };
         }
 
+
+        
         Job j = new Job(
             furn.tile,
             null,
@@ -93,6 +97,9 @@ public class FurnitureActions {
             0,
             itemsDesired
             );
+
+        //TODO: add stockpile priorities, so we can take from lower priority -> higher priority stockpile.
+        j.canTakeFromStockpile = false;
         j.RegisterJobWorkedCallback(Stockpile_JobWorked);
         furn.AddJob(j);
     }

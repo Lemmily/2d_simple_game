@@ -23,6 +23,8 @@ public class Job{
 
     public string jobObjectType { get; protected set;  }
 
+    public bool canTakeFromStockpile = true;
+
     public Job (Tile tile, 
             string jobObjectType, 
             Action<Job> cbJobComplete,
@@ -98,6 +100,17 @@ public class Job{
     }
 
     public void DoWork(float workTime) {
+
+
+        if (HasAllMaterials() == false) {
+            // if we've tried to do work on a job that doesnt have all materials.
+            // it's probably an insta-completable one!
+            if (cbJobWorked != null)
+                cbJobWorked(this);
+            return;
+        }
+
+
         JobTime -= workTime;
 
         if (cbJobWorked != null) {
@@ -128,11 +141,13 @@ public class Job{
     }
 
 
-    public int DesiresInventory(Inventory inv) {
+    public int DesiresInventory(Inventory inv)
+    {
+        if (inv == null)
+            return 0;
         if (acceptsAnyInventoryItem) {
             return inv.maxStackSize;
         }
-
 
         if (inventoryRequirements.ContainsKey(inv.objectType) == false) {
             return 0;

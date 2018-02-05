@@ -177,29 +177,36 @@ public class Character : IXmlSerializable{
             return;
         }
 
+        j.UnregisterJobCompleteCallback(OnJobEnded);
+        j.UnregisterJobCancelCallback(OnJobEnded);
+
         myJob = null;
-
-
-        if (inventory != null) {
-            currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
-            if (inventory != null) {
-                Debug.LogError("Trying to get rid of character inventory failed. SMUSHING");
-                inventory = null;
-            }
-        }
+        //if (inventory != null) {
+        //    currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
+        //    if (inventory != null) {
+        //        Debug.LogError("Trying to get rid of character inventory failed. SMUSHING");
+        //        inventory = null;
+        //    }
+        //}
     }
 
     private void GetNewJob() {
 
         //FIXME: just gets first job.
+        if (myJob != null) {
+            Debug.LogError("Character:- trying tog et a new job even though I have one!");
+            return;
+        }
+
+
         myJob = currTile.world.jobQueue.Dequeue();
         if (myJob == null)
             return;
 
-
         //Same results for either.
         myJob.RegisterJobCompleteCallback(OnJobEnded);
         myJob.RegisterJobCancelCallback(OnJobEnded);
+        
         destTile = myJob.tile;
 
         //If I can't find any items for this job, cancel it!
@@ -229,6 +236,8 @@ public class Character : IXmlSerializable{
 
             if (myJob == null) {
                 //I couldn't get a new job.
+                //Debug.Log("Character:- No Job Available");
+                path = null;
                 destTile = currTile;
                 return;
             }
@@ -262,6 +271,7 @@ public class Character : IXmlSerializable{
             //check to see if what I'm carrying is something the job needs.
             if (myJob.DesiresInventory(inventory) > 0) {
                 if (currTile == myJob.tile || currTile.IsNeighbour(myJob.tile)) {
+                    //if I'm next to it or on it, deliver the goods!
                     //myJob.inventoryRequirements[inventory.objectType];
                     currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
                     myJob.DoWork(0);
@@ -277,27 +287,63 @@ public class Character : IXmlSerializable{
         }
         else {
 
-            if (inventory == null ) {
+            //if I don't have an inventory OR my inventory is no longer needed.
+            if (inventory == null || (inventory != null && myJob.DesiresInventory(inventory) <= 0)) { 
                 FindNextJobMaterial();
+                return;
             }
 
-            //pickup the inventory off the floor.
-            if (inventory != null && currTile.inventory != null && (myJob.DesiresInventory(currTile.inventory) > 0)) {
-                currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
-            } else if (nextTile != currTile && nextTile.IsNeighbour(currTile) && nextTile.inventory != null) {
-                currTile.world.inventoryManager.PlaceInventory(this, nextTile.inventory);
+            if (myJob.DesiresInventory(destTile.inventory) > 0 && destTile.IsNeighbour(currTile)) {
+                currTile.world.inventoryManager.PlaceInventory(
+                        this,
+                        destTile.inventory,
+                        Mathf.Min(destTile.inventory.stackSize, inventory.maxStackSize - inventory.stackSize));
+            } else if (currTile == destTile && myJob.DesiresInventory(destTile.inventory) > 0) {
+                currTile.world.inventoryManager.PlaceInventory(
+                        this,
+                        destTile.inventory,
+                        Mathf.Min(currTile.inventory.stackSize, inventory.maxStackSize - inventory.stackSize));
             }
+
+            //// lets see if I can pickup the inventory off the floor.
+            //if (inventory != null && currTile.inventory != null && (myJob.DesiresInventory(currTile.inventory) > 0)) {
+            //    currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory);
+
+
+                //} else if (nextTile.IsNeighbour(currTile)) {
+                //    if (nextTile.inventory != null && myJob.DesiresInventory(nextTile.inventory) > 0) {
+                //        nextTile.world.inventoryManager.PlaceInventory(
+                //            this, 
+                //            nextTile.inventory, 
+                //            Mathf.Min(nextTile.inventory.stackSize, inventory.maxStackSize - inventory.stackSize));
+                //    }
+                //}
+
+                // else if (nextTile != currTile && nextTile.IsNeighbour(currTile) && nextTile.inventory != null) {
+                //    currTile.world.inventoryManager.PlaceInventory(this, nextTile.inventory);
+                //}
         }
     }
 
     public void FindNextJobMaterial()
     {
         Inventory desired = myJob.GetFirstDesiredInventory();
-        Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(
-            desired.objectType,
-            currTile,
-            desired.maxStackSize - desired.stackSize
-            );
+        Inventory supplier;
+
+        if (myJob.canTakeFromStockpile) {
+            supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(
+                desired.objectType,
+                currTile,
+                desired.maxStackSize - desired.stackSize
+                );
+        } else {
+            supplier = currTile.world.inventoryManager.GetClosestLooseInventoryOfType(
+                desired.objectType,
+                currTile,
+                desired.maxStackSize - desired.stackSize
+                );
+        }
+
         if (supplier == null) {
             Debug.Log("No tile available containing objects of " + desired.objectType + " available");
             AbandonJob();
@@ -307,6 +353,9 @@ public class Character : IXmlSerializable{
         inventory.stackSize = 0;
         inventory.maxStackSize = Mathf.Min(desired.maxStackSize - desired.stackSize, maxStackSize); //
         inventory.character = this;
+
+
+        Debug.Log(" CHaracter:- Inventory type got - " + inventory.objectType + " , " + inventory.maxStackSize);
 
         destTile = supplier.tile;
         return;
