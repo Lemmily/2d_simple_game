@@ -140,6 +140,38 @@ public class World : IXmlSerializable
         return tiles[x, y];
     }
 
+    public Tile GetNearestEmptyTile(Tile sourceTile)
+    {
+        Tile tile;
+
+        //get all immediately nearby open tiles
+        List<Tile> tiles = new List<Tile>();
+        for (int i = sourceTile.X - 1; i < sourceTile.X + 1; i++)
+        {
+            for (int j = sourceTile.Y - 1; j < sourceTile.Y + 1; j++)
+            {
+
+                tile = GetTileAt(i, j);
+                if (tile.IsEnterable() != ENTERABILITY.Never)
+                {
+                    tiles.Add(tile);
+                }
+            }
+        }
+        //TODO: Make it pick the safer tile (like the one inside instead of outside)
+        if (tiles.Count == 0)
+        {
+            return null;
+        }
+        tile = tiles[0];
+        return tile;
+    }
+       
+    public Tile GetHomeSafeTile()
+    {
+        throw new NotImplementedException();
+    }
+
 
     public void SetupPathFindingTest() {
         int l = Width / 2 - 5;
@@ -371,6 +403,7 @@ public class World : IXmlSerializable
             cbInventoryCreated(t.inventory);
         }
     }
+
 
     private void ReadXml_Characters(XmlReader reader)
     {

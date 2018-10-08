@@ -10,6 +10,14 @@ public class Character : IXmlSerializable{
 
     public float x {
         get {
+            if (currTile == null)
+                Debug.LogError("Nulltile alert." + currTile + "/////" + nextTile);
+
+            if ( nextTile == null) 
+            {
+                Debug.LogError("Nulltile alert." + currTile + "/////" + nextTile);
+                nextTile = currTile;
+            }
             return  Mathf.Lerp( currTile.X, nextTile.X, movementPercentage);
              }
     }
@@ -331,7 +339,7 @@ public class Character : IXmlSerializable{
     internal void RegisterPathChangedCallback(Action<Queue<Tile>> cb) {
         cbPathChanged += cb;
     }
-    internal void UnregisterOnChangedCallback(Action<Queue<Tile>> cb) {
+    internal void UnregisterPathChangedCallback(Action<Queue<Tile>> cb) {
         cbPathChanged -= cb;
     }
 
@@ -343,6 +351,16 @@ public class Character : IXmlSerializable{
         }
 
         myJob = null;
+
+        ////if (this.currTile.IsEnterable() == ENTERABILITY.Never)
+        //{
+        //    //find nearest empty tile to go into.
+        //    nextTile = WorldController.Instance.world.GetNearestEmptyTile(currTile);
+        //    if (nextTile == null)
+        //    {
+        //        currTile = WorldController.Instance.world.GetHomeSafeTile();
+        //    }
+        //}
     }
 
     public XmlSchema GetSchema()
