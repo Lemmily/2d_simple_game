@@ -4,7 +4,7 @@
 /[Bb]uild/
 /[Bb]uilds/
 /Assets/AssetStoreTools*
-Library\*
+Library/*
 
 # Visual Studio 2015 cache directory
 /.vs/
@@ -35,3 +35,4 @@ sysinfo.txt
 *.unitypackage
 *.meta
 *.dwlt
+Library/ScriptMapper
