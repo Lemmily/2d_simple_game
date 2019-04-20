@@ -4,7 +4,8 @@ using System;
 
 public class Job{
 
-
+    static int totalJobNum = 0;
+    public int jobNum;
     public Tile tile;
     public float JobTime
     {
@@ -23,14 +24,19 @@ public class Job{
 
     public string jobObjectType { get; protected set;  }
 
+    public Furniture furniturePrototype;
+
     public bool canTakeFromStockpile = true;
+
+    public int timesQueued = 0;
 
     public Job (Tile tile, 
             string jobObjectType, 
             Action<Job> cbJobComplete,
             //Action<Job> cbJobWorked,
             float jobTime, 
-            Inventory[] inventoryRequirements
+            Inventory[] inventoryRequirements,
+            bool canTakeFromStockpile=true
         )
     {
         this.tile = tile;
@@ -38,6 +44,7 @@ public class Job{
         //this.cbJobWorked += cbJobWorked;
         this.JobTime = jobTime;
         this.jobObjectType = jobObjectType;
+        this.canTakeFromStockpile = canTakeFromStockpile;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (inventoryRequirements != null) {
@@ -49,7 +56,9 @@ public class Job{
         //inv.objectType = "Steel PLate"; //type required.
         //inv.maxStackSize = 5; //num required to complete job
         //inventoryRequirements["Steel Plate"] = inv;
-        
+
+        jobNum = totalJobNum;
+        totalJobNum++;
     }
 
     protected Job(Job job) {
@@ -65,11 +74,19 @@ public class Job{
                 this.inventoryRequirements[inv.objectType] = inv.Clone();
             }
         }
+        jobNum = totalJobNum;
+        totalJobNum++;
     }
 
     virtual public Job Clone() {
         return new Job(this);
     }
+
+    public override string ToString()
+    {
+        return "Job " + jobNum + " :-   type:" + jobObjectType + "\ttime:"+JobTime + "\tqueued:"+timesQueued + "\nStuff needed:-" + inventoryRequirements;
+    }
+
 
     public void RegisterJobCompleteCallback(Action<Job> cb) {
         cbJobComplete += cb;
@@ -88,6 +105,7 @@ public class Job{
     {
         cbJobCancel -= cb;
     }
+
     public void RegisterJobWorkedCallback(Action<Job> cb)
     {
         cbJobWorked += cb;
@@ -100,7 +118,6 @@ public class Job{
     }
 
     public void DoWork(float workTime) {
-
 
         if (HasAllMaterials() == false) {
             // if we've tried to do work on a job that doesnt have all materials.
@@ -127,7 +144,8 @@ public class Job{
         if (cbJobCancel != null)
             cbJobCancel(this);
 
-        tile.world.jobQueue.Remove(this);
+        if (tile.world.jobQueue.HasJob(this))
+            tile.world.jobQueue.Remove(this);
     }
 
     public bool HasAllMaterials() {
@@ -173,4 +191,6 @@ public class Job{
         return null;
     }
 
+
+   
 }

@@ -39,10 +39,13 @@ public class Furniture : IXmlSerializable
 
     // eg sofa 3x2, graphis 3x1 use area extra row.
     // TODO: allow for weird shapes here?
-    int width = 1;
-    int height = 1;
+    public int Width { get; protected set; }
+    public int Height { get; protected set; }
+
+    public Color tint = Color.white;
 
     public Action<Furniture> cbOnChanged;
+    public Action<Furniture> cbOnRemoved;
 
     Func<Tile, bool> funcPositionValidation;
 
@@ -60,8 +63,9 @@ public class Furniture : IXmlSerializable
         this.objectType = other.objectType;
         this.movementCost = other.movementCost;
         this.roomEnclosing = other.roomEnclosing;
-        this.width = other.width;
-        this.height = other.height;
+        this.Width = other.Width;
+        this.Height = other.Height;
+        this.tint = other.tint;
         this.linksToNeighbour = other.linksToNeighbour;
 
         this.jobs = new List<Job>();
@@ -70,6 +74,9 @@ public class Furniture : IXmlSerializable
 
         if (other.updateActions != null )
             this.updateActions = (Action<Furniture, float>)other.updateActions;
+
+        if (other.funcPositionValidation != null)
+            this.funcPositionValidation = (Func<Tile, bool>)other.funcPositionValidation.Clone();
 
 
         this.IsEnterable = other.IsEnterable;
@@ -81,10 +88,10 @@ public class Furniture : IXmlSerializable
         this.objectType = objectType;
         this.movementCost = movementCost;
         this.roomEnclosing = roomEnclosing;
-        this.width = width;
-        this.height = height;
+        this.Width = width;
+        this.Height = height;
         this.linksToNeighbour = linksToNeighbour;
-
+        
         this.furnParameters = new Dictionary<string, float>();
         this.funcPositionValidation += this.__IsValidPosition;
         
@@ -111,6 +118,7 @@ public class Furniture : IXmlSerializable
     }
 
     public static Furniture PlaceInstance(Furniture proto, Tile tile) {
+
         if( ! proto.funcPositionValidation(tile)) {
             Debug.LogError("Place instance - couldn't place item here");
             return null;
@@ -160,11 +168,21 @@ public class Furniture : IXmlSerializable
     }
 
 
-    public void RegisterOnChangedCallback(Action<Furniture> callbackFunc) {
+    public void RegisterOnChangedCallback(Action<Furniture> callbackFunc)
+    {
         cbOnChanged += callbackFunc;
     }
-    public void UnregisterOnChangedCallback(Action<Furniture> callbackFunc) {
+    public void UnregisterOnChangedCallback(Action<Furniture> callbackFunc)
+    {
         cbOnChanged -= callbackFunc;
+    }
+    public void RegisterOnRemovedCallback(Action<Furniture> callbackFunc)
+    {
+        cbOnRemoved += callbackFunc;
+    }
+    public void UnregisterOnRemovedCallback(Action<Furniture> callbackFunc)
+    {
+        cbOnRemoved -= callbackFunc;
     }
 
 
@@ -176,13 +194,23 @@ public class Furniture : IXmlSerializable
         //make sure tileis floor.
         //make sure tile doesnt have furniture.
 
-        if (t.Type != TileType.Floor) {
-            return false;
-        } else if (t.furniture != null) {
-            return false;
+        for (int x_off = t.X; x_off < t.X + Width; x_off++)
+        {
+            for (int y_off = t.Y; y_off < t.Y + Height; y_off++)
+            {
+                Tile t2 = t.world.GetTileAt(x_off, y_off);
+                 
+                if (t2.Type != TileType.Floor)
+                {
+                    return false;
+                }
+                else if (t2.furniture != null)
+                {
+                    return false;
+                }
+            }
         }
-
-
+               
         return true;
     }
 
@@ -237,14 +265,14 @@ public class Furniture : IXmlSerializable
     public void AddJob(Job j)
     {
         jobs.Add(j);
-        tile.world.jobQueue.Enqueue(j);
+        tile.world.jobQueue.Enqueue(j); //make sure wrld knows too.
     }
 
     public void RemoveJob(Job j)
     {
         jobs.Remove(j);
         j.CancelJob();
-        tile.world.jobQueue.Remove(j);
+        //tile.world.jobQueue.Remove(j);
     }
 
     public void ClearJobs()
@@ -252,12 +280,25 @@ public class Furniture : IXmlSerializable
         foreach (Job job in jobs) {
             RemoveJob(job);
         }
-        
     }
 
 
     public bool IsStockpile()
     {
-        return objectType == "stockpile";
+        return objectType.ToLower().Equals("stockpile");
+    }
+
+    public void Deconstruct()
+    {
+        tile.UnplaceFurniture();
+
+        if (cbOnRemoved != null)
+            cbOnRemoved(this);
+
+        if(roomEnclosing)
+        {
+            Room.ReallocateRooms(tile);
+        }
+        
     }
 }

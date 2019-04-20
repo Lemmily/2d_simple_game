@@ -106,25 +106,70 @@ public class Tile : IXmlSerializable{
         return furniture != null;
     }
 
-    public bool InstallFurniture(Furniture objInstance) {
-        if ( objInstance == null) {
-            //uninstalling
-            this.furniture = null;
-            return true;
-        } else if (this.furniture != null) {
-            //Debug.LogError("Trying to install into a tile that has something installed already!");
+    public bool UnplaceFurniture()
+    {
+        if (furniture == null)
             return false;
-        } else {
-            this.furniture = objInstance;
-            return true;
+
+        Furniture f = furniture;
+
+        if (furniture.Width > 1 || furniture.Height > 1)
+        {
+
+            for (int x_off = X; x_off < X + f.Width; x_off++)
+            {
+                for (int y_off = Y; y_off < Y + f.Height; y_off++)
+                {
+                    Tile t = world.GetTileAt(x_off, y_off);
+                    t.furniture = null;
+                }
+
+            }
         }
+        furniture = null;
+        
+        return true;
+    }
+
+    public void Deconstruct()
+    {
+        Debug.Log("Deconstruct");
+        furniture = null;
+
+    }
+
+    public bool InstallFurniture(Furniture objInstance) {
+        if (objInstance == null)
+        {
+            Debug.LogError("Trying to install null furniture??? NOPE");
+            //Just uninstalling FIXME: What if we have multi tile furniture?
+            return false;
+        }
+        if (objInstance.IsValidPosition(this) == false) {
+            Debug.LogError("Trying to assign a furniture to a tile that isn't valid.");
+            return false;
+        }
+
+        for (int x_off = X; x_off < X + objInstance.Width; x_off++)
+        {
+            for (int y_off = Y; y_off < Y + objInstance.Height; y_off++)
+            {
+                Tile t = world.GetTileAt(x_off, y_off);
+                t.furniture = objInstance;
+            }
+
+        }
+        return true;
+                 
     }
 
 
     public bool PlaceInventory(Inventory other_inv) {
+
+
         if (other_inv == null) {
-            inventory = null;
-            return true;
+            //inventory = null;
+            return false;
         }
 
         if (inventory != null) {
@@ -133,22 +178,29 @@ public class Tile : IXmlSerializable{
                 Debug.LogError("trying to assign inventory to tile that has a DIFFERENT type");
                 return false;
             }
-            if (inventory.stackSize + other_inv.stackSize > other_inv.maxStackSize) {
+            else if (inventory.objectType != other_inv.objectType && inventory.stackSize == 0)
+            {
+                //has other type, but nothing occupying. Might be used as stockpile filter?
+                return false;
+            }
+
+            if (inventory.stackSize + other_inv.stackSize > inventory.maxStackSize) {
                 Debug.LogError("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
-                int current = inventory.stackSize + other_inv.stackSize;
-                int dif = current - inventory.maxStackSize;
-                inventory.objectType = other_inv.objectType;
+                int total = inventory.stackSize + other_inv.stackSize;
+                int dif = total - inventory.maxStackSize;
+                
                 inventory.stackSize = inventory.maxStackSize;
                 other_inv.stackSize = dif;
                 return true;
             }
             else {
+                //just add them all to the tile inventory.
                 inventory.stackSize += other_inv.stackSize;
-
+                other_inv.stackSize = 0;
                 return true;
             }
         }
-
+        //getting here means the tile had no inventory.
         inventory = other_inv;
         inventory.tile = this;
         return true;

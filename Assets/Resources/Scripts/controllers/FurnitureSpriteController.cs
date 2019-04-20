@@ -43,12 +43,8 @@ public class FurnitureSpriteController : MonoBehaviour
 
         furnitureGameObjectMap.Add(furn, furn_go);
 
-
-    
-
-
         furn_go.name = furn.objectType + "_" + furn.tile.X + "_" + furn.tile.Y;
-        furn_go.transform.position = new Vector3(furn.tile.X, furn.tile.Y, 0);
+        furn_go.transform.position = new Vector3(furn.tile.X + ((furn.Width-1)/2f) , furn.tile.Y + ((furn.Height-1)/2f), 0);
         furn_go.transform.SetParent(this.transform, true);
 
 
@@ -69,19 +65,45 @@ public class FurnitureSpriteController : MonoBehaviour
         furn_go.transform.SetParent(all_tiles_go.transform);
         SpriteRenderer sr = furn_go.AddComponent<SpriteRenderer>();
         sr.sprite = GetSpriteForFurniture(furn);
+        sr.color = furn.tint;
         sr.sortingLayerName = "Furniture";
 
         furn.RegisterOnChangedCallback(OnFurnitureChanged);
+        furn.RegisterOnRemovedCallback(OnFurnitureRemoved);
     }
+
+
+    void OnFurnitureRemoved(Furniture furn)
+    {
+        if (!furnitureGameObjectMap.ContainsKey(furn))
+        {
+            Debug.LogError("OnFurnitureChanged - trie dto change visuals for something not in the map!");
+            return;
+        }
+
+        foreach (Tile tile in furn.tile.GetNeighbours(true))
+        {
+            if (tile.furniture != null && tile.furniture.cbOnChanged != null)
+            {
+                tile.furniture.cbOnChanged(tile.furniture);
+            }
+        }
+        furn.UnregisterOnRemovedCallback(OnFurnitureRemoved);
+        GameObject furn_go = furnitureGameObjectMap[furn];
+        Destroy(furn_go);
+        furnitureGameObjectMap.Remove(furn);
+    }
+
 
     void OnFurnitureChanged(Furniture furn) {
         if (!furnitureGameObjectMap.ContainsKey(furn)) {
             Debug.LogError("OnFurnitureChanged - trie dto change visuals for something not in the map!");
+            return;
         }
         GameObject furn_go = furnitureGameObjectMap[furn];
         furn_go.GetComponent<SpriteRenderer>().sprite = GetSpriteForFurniture(furn);
-
-
+        furn_go.GetComponent<SpriteRenderer>().color = furn.tint;
+        
         //if this is a door
 
 
@@ -118,47 +140,49 @@ public class FurnitureSpriteController : MonoBehaviour
         t = World.GetTileAt(x, y + 1);
 
         if (t != null && t.furniture != null && t.furniture.objectType == furn.objectType) {
-            spriteName += "N";
+            spriteName += "n";
         }
         t = World.GetTileAt(x + 1, y);
         if (t != null && t.furniture != null && t.furniture.objectType == furn.objectType) {
-            spriteName += "E";
+            spriteName += "e";
         }
         t = World.GetTileAt(x, y - 1);
         if (t != null && t.furniture != null && t.furniture.objectType == furn.objectType) {
-            spriteName += "S";
+            spriteName += "s";
         }
         t = World.GetTileAt(x - 1, y);
         if (t != null && t.furniture != null && t.furniture.objectType == furn.objectType) {
-            spriteName += "W";
+            spriteName += "w";
         }
 
 
-        if (furn.objectType == "door") {
-            if (furn.furnParameters["openness"] < 0.1f) {
+        if (furn.objectType == "door")
+        {
+            if (furn.furnParameters["openness"] < 0.1f)
+            {
                 spriteName = "door";
             }
-            else if (furn.furnParameters["openness"] < 0.5f) {
+            else if (furn.furnParameters["openness"] < 0.5f)
+            {
                 spriteName = "door_openness_1";
             }
-            else if (furn.furnParameters["openness"] < 0.9f) {
+            else if (furn.furnParameters["openness"] < 0.9f)
+            {
                 spriteName = "door_openness_2";
             }
-            else {
+            else
+            {
                 spriteName = "door_openness_3";
             }
         }
 
 
-        if (furn.objectType == "stockpile") {
-            spriteName = "stockpile";
-        }
-
-        try {
-
+        try
+        {
             return ResourceLoader.instance.furnitureSpriteMap[spriteName];
         }
-        catch (KeyNotFoundException ex) {
+        catch (KeyNotFoundException ex)
+        {
             Debug.Log(ex.Data);
             return null;
 

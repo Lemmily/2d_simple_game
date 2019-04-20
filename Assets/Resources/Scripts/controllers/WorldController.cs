@@ -62,6 +62,7 @@ public class WorldController : MonoBehaviour {
         world.SetupPathFindingTest();
 
         PathTileGraph tileGraph = new PathTileGraph(world);
+        PlaceInventory();
     }
 
 

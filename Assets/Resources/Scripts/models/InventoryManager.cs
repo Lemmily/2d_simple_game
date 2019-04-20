@@ -22,7 +22,9 @@ public class InventoryManager  {
             //cbInventoryRemoved(inv);
 
             if (inv.tile != null) {
-                inv.tile.inventory = null;
+                //inv.tile.inventory = null;
+                if (inv.Equals(inv.tile.inventory))
+                    inv.tile.inventory = null;
                 inv.tile = null;
             }
             if (inv.character != null) {
@@ -64,18 +66,19 @@ public class InventoryManager  {
             Debug.LogError("Trying to place a null inventory into a tile");
             return false;
         }
-        int inv_stackSize = inv.stackSize;
+        int inv_orig_stackSize = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
             //the tile rejected the inventory.
             Debug.Log("Inventory Manager:- Tried & failed to placed inventory:-" + inv + " on tile :- " + tile);
             return false;
         }
         
-        if (tile.inventory != null && inv.stackSize != inv_stackSize) {
-            //how would inv change if there was no tile inventory?
-            Debug.Log("Placed something on a tile.");
-            cbInventoryChanged(tile.inventory);
-        }
+        //if (tile.inventory != null && inv.stackSize != inv_orig_stackSize) {
+        //    //how would inv change if there was no tile inventory?
+        //    Debug.Log("Placed something on a tile!");
+        //    //cbInventoryChanged(tile.inventory);
+
+        //}
 
         // At this point, "inv" might be an empty stack if it was merged to another stack.
         CleanUpInventory(inv);
@@ -184,6 +187,7 @@ public class InventoryManager  {
 
         if (desiredAmount == -1) {
             desiredAmount = 1; //FIXME: A bit silly hardcode so i can just check if there's ANY pile around
+            //this just means we can kinda ask if htere are any around.
         }
         //FIXME: lies aout the closest item
         if (inventories.ContainsKey(objectType) == false)
@@ -194,7 +198,7 @@ public class InventoryManager  {
                 //if it's ona tile.
 
                 if (inv.tile.furniture != null && inv.tile.furniture.IsStockpile())
-                    return null; // not loose!
+                    continue; // not loose!
                 return inv; //yay loose inventory
             }
         }
@@ -245,5 +249,14 @@ public class InventoryManager  {
     public void UnregisterInventoryRemoved(Action<Inventory> callbackfunc)
     {
         cbInventoryRemoved -= callbackfunc;
+    }
+    public void RegisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged += callbackfunc;
+    }
+
+    public void UnregisterInventoryChanged(Action<Inventory> callbackfunc)
+    {
+        cbInventoryChanged -= callbackfunc;
     }
 }

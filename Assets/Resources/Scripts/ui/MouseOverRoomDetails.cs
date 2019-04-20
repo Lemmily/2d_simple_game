@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class MouseOverRoomIndexText : MonoBehaviour {
+public class MouseOverRoomDetails : MonoBehaviour {
     private MouseController mouseController;
     Text myText;
 
@@ -23,12 +23,19 @@ public class MouseOverRoomIndexText : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update ()
-    {
+	void Update () {
         Tile t = mouseController.GetMouseOverTile();
-        if (t != null)
+
+        if (t != null && t.room != null && t.world.rooms.IndexOf(t.room) >= 0)
         {
-            myText.text = "Room Index: " + t.world.rooms.IndexOf(t.room);
+            string s = "";
+            foreach (string g in t.room.GetGasNames())
+            {
+                s += g + ": " + t.room.GetGasAmount(g) + " (" + t.room.GetGasPercentage(g)*100 + "%) \n";
+            }
+            myText.text = s;
+            return;
         }
-	}
+        myText.text = "No gases present.";
+    }
 }

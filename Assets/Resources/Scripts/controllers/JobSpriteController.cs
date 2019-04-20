@@ -16,7 +16,7 @@ public class JobSpriteController : MonoBehaviour {
 	}
 	void OnJobCreated(Job j) {
 
-        if(j.jobObjectType == null) {
+        if(j.jobObjectType == null || j.jobObjectType.Equals("")) {
             //no associated sprite needing to be drawn. No need to render.
             return;
         }
@@ -33,7 +33,7 @@ public class JobSpriteController : MonoBehaviour {
         jobGameObjectMap.Add(j, job_go);
 
         job_go.name = j.jobObjectType + "_" + j.tile.X + "_" + j.tile.Y;
-        job_go.transform.position = new Vector3(j.tile.X, j.tile.Y, 0);
+        job_go.transform.position = new Vector3(j.tile.X + (j.furniturePrototype.Width-1)/2f, j.tile.Y + (j.furniturePrototype.Height-1)/2f, 0);
         job_go.transform.SetParent(this.transform, true);
 
         //FIXME: this is hardcoded - not ideal!!!

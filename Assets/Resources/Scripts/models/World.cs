@@ -22,7 +22,7 @@ public class World : IXmlSerializable
 
     public PathTileGraph tileGraph;
 
-    Dictionary<string, Furniture> furnitureProto;
+    public Dictionary<string, Furniture> furnitureProto;
     public Dictionary<string, Job> furnitureJobPrototypes;
     private Action<Furniture> cbInstalledObjectCreated;
     private Action<Tile> cbTileChanged;
@@ -59,7 +59,7 @@ public class World : IXmlSerializable
         inventoryManager = new InventoryManager();
 
         rooms = new List<Room>();
-        rooms.Add(new Room()); 
+        rooms.Add(new Room(this)); 
         Width = w;
         Height = h;
 
@@ -149,6 +149,26 @@ public class World : IXmlSerializable
              new Inventory[] { new Inventory("steel plate", 5, 0)
              })
              );
+        
+
+        furnitureProto.Add("oxygen generator", new Furniture("oxygen generator", 
+            10f, 
+            2, 
+            2, 
+            false, 
+            false));
+
+        furnitureProto["oxygen generator"].updateActions += FurnitureActions.OxygenGenerator_UpdateAction;
+
+        furnitureJobPrototypes.Add("oxygen generator",
+             new Job(null, "oxygen generator",
+             FurnitureActions.JobComplete_FurnitureBuilding,
+             //null,
+             1f,
+           
+             new Inventory[] { new Inventory()
+             })
+             );
 
 
         furnitureProto.Add("stockpile", 
@@ -162,6 +182,7 @@ public class World : IXmlSerializable
 
         furnitureProto["stockpile"].updateActions += FurnitureActions.Stockpile_UpdateAction;
         furnitureProto["stockpile"].movementCost = 1f;
+        furnitureProto["stockpile"].tint = Color.blue;
 
         furnitureJobPrototypes.Add("stockpile",
             new Job(null, "stockpile", 
@@ -230,6 +251,7 @@ public class World : IXmlSerializable
            // Debug.LogError("PlaceInstalledObject - failed to place object");
             return null;
         }
+        furniture.RegisterOnRemovedCallback(OnFurnitureRemoved);
         furnitures.Add(furniture);
 
 
@@ -243,7 +265,7 @@ public class World : IXmlSerializable
             //do we need to recalculate rooms?
             if (furniture.roomEnclosing) {
                 //do flood fill for rooms!
-                Room.ReallocateRooms(furniture);
+                Room.ReallocateRooms(furniture.tile);
             }
         }
 
@@ -303,7 +325,11 @@ public class World : IXmlSerializable
         cbTileChanged -= onTileChanged;
     }
     
-
+    public void OnFurnitureRemoved(Furniture furn)
+    {
+        furn.UnregisterOnRemovedCallback(OnFurnitureRemoved);
+        furnitures.Remove(furn);
+    }
 
     private void OnTileChanged(Tile tile) {
         if (cbTileChanged == null) {

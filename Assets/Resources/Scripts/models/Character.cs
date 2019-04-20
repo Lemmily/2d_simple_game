@@ -10,13 +10,28 @@ public class Character : IXmlSerializable{
 
     public float x {
         get {
-            return  Mathf.Lerp( currTile.X, nextTile.X, movementPercentage);
+            if (nextTile != null)
+            {
+
+                return Mathf.Lerp(currTile.X, nextTile.X, movementPercentage);
+            } else
+            {
+                return currTile.X;
+            }
              }
     }
     public float y{
         get
         {
-            return  Mathf.Lerp(currTile.Y, nextTile.Y, movementPercentage);
+            if (nextTile != null)
+            {
+
+                return Mathf.Lerp(currTile.Y, nextTile.Y, movementPercentage);
+            }
+            else
+            {
+                return currTile.Y;
+            }
         }
     }
 
@@ -35,6 +50,29 @@ public class Character : IXmlSerializable{
             }
         }
     }
+
+    private World world {
+        get
+        {
+            return this.currTile.world;
+        }
+    }
+
+
+
+    //used by UI!!
+    public string CurrentJob
+    {
+        get
+        {
+            if (myJob == null)
+            {
+                return "nothing";
+            }
+            return this.myJob.ToString();
+        }
+    }
+
     Tile nextTile;
 
     public PathAStar path;
@@ -96,18 +134,6 @@ public class Character : IXmlSerializable{
 
     //}
 
-    public void AbandonJob() {
-        nextTile = destTile = currTile;
-        path = null;
-        currTile.world.jobQueue.Enqueue(myJob);
-        myJob.UnregisterJobCancelCallback(OnJobEnded);
-        myJob.UnregisterJobCompleteCallback(OnJobEnded);
-        myJob = null;
-
-        if (inventory != null) {
-            currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
-        }
-    }
 
     private void GeneratePath()
     {
@@ -178,6 +204,7 @@ public class Character : IXmlSerializable{
         }
 
         j.UnregisterJobCompleteCallback(OnJobEnded);
+        // j.UnregisterJobWorkedCallback() TODO: for when this is actually assigned.
         j.UnregisterJobCancelCallback(OnJobEnded);
 
         myJob = null;
@@ -190,6 +217,22 @@ public class Character : IXmlSerializable{
         //}
     }
 
+    public void AbandonJob()
+    {
+        nextTile = null;
+        destTile = null;
+        path = null;
+        currTile.world.jobQueue.Enqueue(myJob); // was "Requeue" ..reurn the job to the queue.
+        myJob.UnregisterJobCancelCallback(OnJobEnded);
+        myJob.UnregisterJobCompleteCallback(OnJobEnded);
+        myJob = null;
+
+        if (inventory != null)
+        {
+            currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
+        }
+    }
+
     private void GetNewJob() {
 
         //FIXME: just gets first job.
@@ -199,26 +242,48 @@ public class Character : IXmlSerializable{
         }
 
 
-        myJob = currTile.world.jobQueue.Dequeue();
+        myJob = world.jobQueue.Dequeue();
         if (myJob == null)
             return;
 
-        //Same results for either.
-        myJob.RegisterJobCompleteCallback(OnJobEnded);
-        myJob.RegisterJobCancelCallback(OnJobEnded);
-        
-        destTile = myJob.tile;
 
         //If I can't find any items for this job, cancel it!
-        if (currTile.world.inventoryManager.GetClosestInventoryOfType(myJob.GetFirstDesiredInventory().objectType, currTile) == null) {
+        string objectType = myJob.GetFirstDesiredInventory().objectType;
+        if (objectType != null 
+            && 
+            myJob.canTakeFromStockpile == true
+            && 
+            world.inventoryManager.GetClosestInventoryOfType(objectType, currTile) == null)
+            //trying to include the check here to bin job, becuase no loose items.
+            {
             AbandonJob();
             path = null;
             destTile = currTile;
             return;
+        } else if (objectType != null 
+            && 
+            world.inventoryManager.GetClosestLooseInventoryOfType(objectType, currTile) == null)
+        {
+            AbandonJob();
+            path = null;
+            destTile = currTile;
+            return;
+        } else
+        {
+            Debug.Log("Character:- GetNewJob() - found some materials, or dont need them!");
         }
-        GeneratePath();
 
-        if (path.Length() == 0 ) {
+
+        //Same results for either atm.
+        myJob.RegisterJobCompleteCallback(OnJobEnded);
+        myJob.RegisterJobCancelCallback(OnJobEnded);
+
+        destTile = myJob.tile;
+
+        // check to see if we can reach the job.... 
+        // though maybe this should be done in movement?
+        GeneratePath();
+        if (path == null || path.Length() == 0 ) {
             Debug.LogError("Could not reach job site!");
             AbandonJob();
             path = null;
@@ -238,7 +303,7 @@ public class Character : IXmlSerializable{
                 //I couldn't get a new job.
                 //Debug.Log("Character:- No Job Available");
                 path = null;
-                destTile = currTile;
+                destTile = null;
                 return;
             }
         }
@@ -274,7 +339,7 @@ public class Character : IXmlSerializable{
                     //if I'm next to it or on it, deliver the goods!
                     //myJob.inventoryRequirements[inventory.objectType];
                     currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
-                    myJob.DoWork(0);
+                    myJob.DoWork(0); 
                 }
                 else {
                     destTile = myJob.tile;
@@ -367,7 +432,8 @@ public class Character : IXmlSerializable{
     }
 
     void Update_DoMovement(float deltaTime) {
-        if (currTile == destTile || destTile.IsNeighbour(currTile)) {
+        if (currTile == destTile || destTile == null || destTile.IsNeighbour(currTile)) 
+        { 
             path = null;
             return; // We're already were we want to be.
         }

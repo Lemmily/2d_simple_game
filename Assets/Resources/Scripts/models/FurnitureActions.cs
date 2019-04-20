@@ -69,15 +69,26 @@ public class FurnitureActions {
 
 
         if (furn.JobCount() > 0) {
+            //cool. donesies.
             return;
         }
-
-        //Two routes from this point onwards, we have SOME/ALL Inventory.
-        // or we have NO inventory.
-
+        /*TODO: in future stockpiles, rather than being 1x1 pieces of 
+        * seperate furniture, we will make them single large objects 
+        * this would represent our first and probably only variable sized 
+        * furniture:-
+        *  - consider holes in stockpile? maybe a station is installed in
+        *    the middle.
+        *  - Once we implement "mega stockpiles", then the job creation system
+        *  will probably be a lot smarter. We will have requests for different 
+        *  objects.
+        *  
+        *
+        * Two routes from this point onwards, we have SOME/ALL Inventory.
+        * or we have NO inventory.
+        */
         Inventory[] itemsDesired;
         if (furn.tile.inventory == null) {
-            Debug.Log("Stockpile:- Creating job for new stack.");
+            Debug.Log("Stockpile:- Creating job for requesting new stack.");
             itemsDesired = Stockpile_GetItemsFromFilter();
 
         } else {
@@ -88,8 +99,7 @@ public class FurnitureActions {
             itemsDesired = new Inventory[] { desInv };
         }
 
-
-        
+               
         Job j = new Job(
             furn.tile,
             null,
@@ -106,18 +116,20 @@ public class FurnitureActions {
 
     public static Inventory[] Stockpile_GetItemsFromFilter()
     {
-
         //this will be reading from elsewhere.
+        //provides a filter request for stockpiles.
         //FIXME: Make this not hard-coded.
+        //will be able to provide an already created array, because it gets copied by the job.
         return new Inventory[1] { new Inventory("steel plate", 50, 0) };
 
     }
 
     static void Stockpile_JobComplete(Job j)
     {
+        //UNUSED!!
         //TODO: Sort this out so that the job's inventory goes into the tile properly.
         j.tile.world.inventoryManager.PlaceInventory(j.tile, j.inventoryRequirements["steel plate"]);
-        j.tile.furniture.ClearJobs();
+        j.tile.furniture.RemoveJob(j);
         j.UnregisterJobWorkedCallback(Stockpile_JobWorked);
         
     }
@@ -126,11 +138,26 @@ public class FurnitureActions {
     {
         j.tile.furniture.RemoveJob(j);
 
-        foreach (Inventory inv in j.inventoryRequirements.Values) {
-            if (inv.stackSize > 0) {
+        foreach (Inventory inv in j.inventoryRequirements.Values)
+        {
+            if (inv.stackSize > 0)
+            {
                 j.tile.world.inventoryManager.PlaceInventory(j.tile, inv);
                 return;
             }
         }
     }
+
+
+    public static void OxygenGenerator_UpdateAction(Furniture furn, float deltaTime)
+    {
+
+        if (furn.tile.room.GetGasAmount("O2") < 0.20f) {
+            furn.tile.room.ChangeGas("O2", 0.01f * deltaTime);
+            //TODO: Consume electricity.
+        } else {
+            //TODO: go to standby?
+        }
+    }
+
 }
