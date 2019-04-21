@@ -113,15 +113,30 @@ public class WallSpriteController : MonoBehaviour
         return false;
     }
 
-    private void OnFurnitureRemoved(Furniture obj)
+    private void OnFurnitureRemoved(Furniture furn)
     {
-        throw new NotImplementedException();
+        if (!wallGameObjectMap.ContainsKey(furn)) {
+            Debug.LogError("Wall - OnFurnitureRemoved tried to change visuals for sometthing it has no record of.");
+            return;
+        }
+
+        foreach (Tile tile  in furn.tile.GetNeighbours(true)) {
+            if (tile?.furniture?.cbOnChanged != null) {
+                tile.furniture.cbOnChanged(tile.furniture);
+            }
+        }
+
+        furn.UnregisterOnChangedCallback(OnFurnitureChanged);
+        furn.UnregisterOnRemovedCallback(OnFurnitureRemoved);
+        GameObject furn_go = wallGameObjectMap[furn];
+        wallGameObjectMap.Remove(furn);
+        Destroy(furn_go);
     }
 
     private void OnFurnitureChanged(Furniture furn)
     {
         if(!wallGameObjectMap.ContainsKey(furn)){
-            Debug.LogError("OnFurnitureChanged tried to change visuals for sometthing it has no record of.");
+            Debug.LogError("Wall - OnFurnitureChanged tried to change visuals for sometthing it has no record of.");
             return;
         }
         GameObject furn_go = wallGameObjectMap[furn];
