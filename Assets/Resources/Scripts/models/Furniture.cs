@@ -39,16 +39,71 @@ public class Furniture : IXmlSerializable
 
     // eg sofa 3x2, graphis 3x1 use area extra row.
     // TODO: allow for weird shapes here?
-    int width = 1;
-    int height = 1;
+    public int Width { get; protected set; }
+    public int Height { get; protected set; }
+
+    public Color tint = Color.white;
 
     public Action<Furniture> cbOnChanged;
+    public Action<Furniture> cbOnRemoved;
 
     Func<Tile, bool> funcPositionValidation;
 
     public bool linksToNeighbour { get; protected set; }
 
-    public void Update(float deltaTime) {
+    List<Job> jobs;
+
+
+    public Furniture() {
+        this.furnParameters = new Dictionary<string, float>();
+        jobs = new List<Job>();
+    }
+
+    public Furniture(Furniture other) {
+        this.objectType = other.objectType;
+        this.movementCost = other.movementCost;
+        this.roomEnclosing = other.roomEnclosing;
+        this.Width = other.Width;
+        this.Height = other.Height;
+        this.tint = other.tint;
+        this.linksToNeighbour = other.linksToNeighbour;
+
+        this.jobs = new List<Job>();
+
+        this.furnParameters = new Dictionary<string, float>(other.furnParameters);
+
+        if (other.updateActions != null )
+            this.updateActions = (Action<Furniture, float>)other.updateActions;
+
+        if (other.funcPositionValidation != null)
+            this.funcPositionValidation = (Func<Tile, bool>)other.funcPositionValidation.Clone();
+
+
+        this.IsEnterable = other.IsEnterable;
+
+    }
+
+    public Furniture(string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false, bool roomEnclosing= false) {
+        //Furniture obj = new Furniture();
+        this.objectType = objectType;
+        this.movementCost = movementCost;
+        this.roomEnclosing = roomEnclosing;
+        this.Width = width;
+        this.Height = height;
+        this.linksToNeighbour = linksToNeighbour;
+        
+        this.furnParameters = new Dictionary<string, float>();
+        this.funcPositionValidation += this.__IsValidPosition;
+        
+    }
+
+
+    public virtual Furniture Clone() {
+        return new Furniture(this);
+    }
+
+    public void Update(float deltaTime)
+    {
         //if (doorIsOpening) {
         //    openness += deltaTime / doorOpenTime;
         //} else {
@@ -62,48 +117,8 @@ public class Furniture : IXmlSerializable
 
     }
 
-    public Furniture() {
-        this.furnParameters = new Dictionary<string, float>();
-    }
-
-    public Furniture(Furniture other) {
-        this.objectType = other.objectType;
-        this.movementCost = other.movementCost;
-        this.roomEnclosing = other.roomEnclosing;
-        this.width = other.width;
-        this.height = other.height;
-        this.linksToNeighbour = other.linksToNeighbour;
-
-        this.furnParameters = new Dictionary<string, float>(other.furnParameters);
-
-        if (other.updateActions != null )
-            this.updateActions = (Action<Furniture, float>)other.updateActions;
-
-
-        this.IsEnterable = other.IsEnterable;
-
-    }
-
-    public Furniture(string objectType, float movementCost = 1f, bool roomEnclosing=false, int width = 1, int height = 1, bool linksToNeighbour = false) {
-        //Furniture obj = new Furniture();
-        this.objectType = objectType;
-        this.movementCost = movementCost;
-        this.roomEnclosing = roomEnclosing;
-        this.width = width;
-        this.height = height;
-        this.linksToNeighbour = linksToNeighbour;
-
-        this.furnParameters = new Dictionary<string, float>();
-        this.funcPositionValidation += this.__IsValidPosition;
-        
-    }
-
-
-    public virtual Furniture Clone() {
-        return new Furniture(this);
-    } 
-    
     public static Furniture PlaceInstance(Furniture proto, Tile tile) {
+
         if( ! proto.funcPositionValidation(tile)) {
             Debug.LogError("Place instance - couldn't place item here");
             return null;
@@ -122,42 +137,51 @@ public class Furniture : IXmlSerializable
         if (!tile.InstallFurniture(obj)) {
             //we couldn't place the object here. Probs already occupied
 
-
             return null;
         }
 
         if (obj.linksToNeighbour) {
             int x = tile.X;
             int y = tile.Y;
-            Tile t = tile.world.GetTileAt(x, y + 1);
 
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x + 1, y);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x, y - 1);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x - 1, y);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
+            //Orthogonals
+            TriggerOnChanged(tile.world.GetTileAt(x, y + 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y), obj.objectType);
 
+            //Diagonals
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y + 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y + 1), obj.objectType);
         }
 
         return obj;
     }
 
+    public static void TriggerOnChanged(Tile t, string objectType)
+    {
+        if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == objectType) {
+            t.furniture.cbOnChanged(t.furniture);
+        }
+    }
 
-    public void RegisterOnChangedCallback(Action<Furniture> callbackFunc) {
+    public void RegisterOnChangedCallback(Action<Furniture> callbackFunc)
+    {
         cbOnChanged += callbackFunc;
     }
-    public void UnregisterOnChangedCallback(Action<Furniture> callbackFunc) {
+    public void UnregisterOnChangedCallback(Action<Furniture> callbackFunc)
+    {
         cbOnChanged -= callbackFunc;
+    }
+    public void RegisterOnRemovedCallback(Action<Furniture> callbackFunc)
+    {
+        cbOnRemoved += callbackFunc;
+    }
+    public void UnregisterOnRemovedCallback(Action<Furniture> callbackFunc)
+    {
+        cbOnRemoved -= callbackFunc;
     }
 
 
@@ -169,18 +193,28 @@ public class Furniture : IXmlSerializable
         //make sure tileis floor.
         //make sure tile doesnt have furniture.
 
-        if (t.Type != TileType.Floor) {
-            return false;
-        } else if (t.furniture != null) {
-            return false;
+        for (int x_off = t.X; x_off < t.X + Width; x_off++)
+        {
+            for (int y_off = t.Y; y_off < t.Y + Height; y_off++)
+            {
+                Tile t2 = t.world.GetTileAt(x_off, y_off);
+                 
+                if (t2.Type != TileType.Floor)
+                {
+                    return false;
+                }
+                else if (t2.furniture != null)
+                {
+                    return false;
+                }
+            }
         }
-
-
+               
         return true;
     }
 
     public bool IsValidPosition_Door(int x, int y) {
-        //check for e-w wall or n-s wall.
+        //TODO check for an e-w wall or n-s wall.
         return true;
     }
 
@@ -220,5 +254,50 @@ public class Furniture : IXmlSerializable
             } while (reader.ReadToNextSibling("Params"));
         }
 
+    }
+
+    public int JobCount()
+    {
+        return jobs.Count;
+    }
+
+    public void AddJob(Job j)
+    {
+        jobs.Add(j);
+        tile.world.jobQueue.Enqueue(j); //make sure wrld knows too.
+    }
+
+    public void RemoveJob(Job j)
+    {
+        jobs.Remove(j);
+        j.CancelJob();
+        //tile.world.jobQueue.Remove(j);
+    }
+
+    public void ClearJobs()
+    {
+        foreach (Job job in jobs) {
+            RemoveJob(job);
+        }
+    }
+
+
+    public bool IsStockpile()
+    {
+        return objectType.ToLower().Equals("stockpile");
+    }
+
+    public void Deconstruct()
+    {
+        tile.UnplaceFurniture();
+
+        if (cbOnRemoved != null)
+            cbOnRemoved(this);
+
+        if(roomEnclosing)
+        {
+            Room.ReallocateRooms(tile);
+        }
+        
     }
 }

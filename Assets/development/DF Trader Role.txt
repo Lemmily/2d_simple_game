@@ -1,0 +1,26 @@
+Adventurer Role: Trader
+
+	- Site resources
+		- Track resources in quantity instead of just by type
+		- Should depend on trade/tribute relationships as well as available professions and sprawl sites
+		- Villager/farmer schedules/activities
+		- Work with 3D mineral veins, mine maps and other industrial sites
+	- World economy
+		 - Supply/demand based on current available entity resources etc.
+		- Expand on trade/tribute relationships formed in world generation
+		- Realize trade/tribute relationships with actual caravans moving on the map
+		- Ability to get some supply/demand information about nearby locations from travelers and others
+		- Ability to get that information yourself and trade it to merchants, especially as explorer
+		- Replace dwarf mode generated caravans with actual caravans
+		- Improved dwarf mode trade agreements incorporating all the world gen/supply/demand/merchant info etc.
+		- Fairs
+	- Ability to lead a trade caravan
+		- Ability to load stuff onto pack mules
+		- Ability to hire bodyguards
+		- Wagon/wagon teams (might do some teleportation travel with them to avoid annoyances for now)
+		- Being able to trade from wagons, large markets might have people to move objects more quickly
+	- Mansions for sale
+		- Renting/buying cottages and other properties
+		- Might have to get information about struggling nobles
+	- Court
+		- Attaining a certain level of wealth and property should help with access to powerful people, though we have yet to decide what if anything this will grant you in the short term

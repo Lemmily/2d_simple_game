@@ -82,10 +82,16 @@ public class Tile : IXmlSerializable{
 
     }
 
-    public override string ToString()
+    override public String ToString()
     {
-        return "Tile " + X + ", " + Y;
+
+        string message = "(" + X + "," + Y + ") isEnterable:" + IsEnterable();
+        if(this.hasFurniture()) {
+            message += "has furn:-" + this.furniture.objectType;
+        }
+        return message;
     }
+
     internal void RegisterTileChangedCallback(Action<Tile> callback) {
         cbTileTypeChanged += callback;
     }
@@ -94,44 +100,110 @@ public class Tile : IXmlSerializable{
         cbTileTypeChanged -= callback;
     }
 
-    public bool InstallFurniture(Furniture objInstance) {
-        if ( objInstance == null) {
-            //uninstalling
-            this.furniture = null;
-            return true;
-        } else if (this.furniture != null) {
-            //Debug.LogError("Trying to install into a tile that has something installed already!");
+
+    public bool hasFurniture()
+    {
+        return furniture != null;
+    }
+
+    public bool UnplaceFurniture()
+    {
+        if (furniture == null)
             return false;
-        } else {
-            this.furniture = objInstance;
-            return true;
+
+        Furniture f = furniture;
+
+        if (furniture.Width > 1 || furniture.Height > 1)
+        {
+
+            for (int x_off = X; x_off < X + f.Width; x_off++)
+            {
+                for (int y_off = Y; y_off < Y + f.Height; y_off++)
+                {
+                    Tile t = world.GetTileAt(x_off, y_off);
+                    t.furniture = null;
+                }
+
+            }
         }
+        furniture = null;
+        
+        return true;
+    }
+
+    public void Deconstruct()
+    {
+        Debug.Log("Deconstruct");
+        furniture = null;
+
+    }
+
+    public bool InstallFurniture(Furniture objInstance) {
+        if (objInstance == null)
+        {
+            Debug.LogError("Trying to install null furniture??? NOPE");
+            //Just uninstalling FIXME: What if we have multi tile furniture?
+            return false;
+        }
+        if (objInstance.IsValidPosition(this) == false) {
+            Debug.LogError("Trying to assign a furniture to a tile that isn't valid.");
+            return false;
+        }
+
+        for (int x_off = X; x_off < X + objInstance.Width; x_off++)
+        {
+            for (int y_off = Y; y_off < Y + objInstance.Height; y_off++)
+            {
+                Tile t = world.GetTileAt(x_off, y_off);
+                t.furniture = objInstance;
+            }
+
+        }
+        return true;
+                 
     }
 
 
-    public bool PlaceInventory(Inventory inv) {
-        if (inv == null) {
-            inventory = null;
-            return true;
+    public bool PlaceInventory(Inventory other_inv) {
+
+
+        if (other_inv == null) {
+            //inventory = null;
+            return false;
         }
 
         if (inventory != null) {
             // already inventory, amybe combine stacks?
-            if (inventory.objectType != inv.objectType) {
+            if (inventory.objectType != other_inv.objectType && inventory.stackSize > 0) {
                 Debug.LogError("trying to assign inventory to tile that has a DIFFERENT type");
                 return false;
             }
-            if (inventory.stackSize + inv.stackSize > inv.maxStackSize) {
-                Debug.LogError("Trying to add too many items to inventory!");
+            else if (inventory.objectType != other_inv.objectType && inventory.stackSize == 0)
+            {
+                //has other type, but nothing occupying. Might be used as stockpile filter?
                 return false;
             }
 
-            inventory.stackSize += inv.stackSize;
-            return true;
+            if (inventory.stackSize + other_inv.stackSize > inventory.maxStackSize) {
+                Debug.LogWarning("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
+                //could spill to next tile at end?
+                int total = inventory.stackSize + other_inv.stackSize;
+                int dif = total - inventory.maxStackSize;
+                
+                inventory.stackSize = inventory.maxStackSize;
+                other_inv.stackSize = dif;
+                return true;
+            }
+            else {
+                //just add them all to the tile inventory.
+                inventory.stackSize += other_inv.stackSize;
+                other_inv.stackSize = 0;
+                return true;
+            }
         }
-
-        inventory = inv;
-
+        //getting here means the tile had no inventory.
+        inventory = other_inv;
+        inventory.tile = this;
         return true;
     }
     public bool IsNeighbour(Tile tile) {
@@ -220,4 +292,6 @@ public class Tile : IXmlSerializable{
         }
         return null;
     }
+
+
 }

@@ -14,6 +14,21 @@ public class MouseController : MonoBehaviour
     Vector3 lastMousePosition;
 
     List<GameObject> dragPlaceholderPreviews;
+    private bool objectTypeNotDraggable;
+    private bool isDragging = false;
+
+
+    FurnitureSpriteController fsc;
+
+
+    enum MouseMode
+    {
+        BUILD,
+        SELECT
+    }
+
+    MouseMode currentMode = MouseMode.SELECT;
+
 
     // Use this for initialization
     void Start() {
@@ -29,11 +44,30 @@ public class MouseController : MonoBehaviour
         return WorldController.Instance.GetTileAtWorldCoord(GetMousePosition() );
     }
 
+
     // Update is called once per frame
     void Update() {
 
         currentMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         currentMousePos.z = 0;
+
+
+        if ( Input.GetKeyUp(KeyCode.Escape))
+        {
+            if (currentMode == MouseMode.BUILD)
+            {
+                currentMode = MouseMode.SELECT;
+            } else if (currentMode == MouseMode.SELECT)
+            {
+                Debug.Log("Show game menu ??");
+            }
+        }
+
+        if(Input.GetKeyUp(KeyCode.Mouse1) || Input.GetKeyUp(KeyCode.Q)) {
+            if(currentMode == MouseMode.BUILD) {
+                currentMode = MouseMode.SELECT;
+            }
+        }
 
         Tile tileUnderMouse = WorldController.Instance.GetTileAtWorldCoord(currentMousePos);
 
@@ -55,8 +89,38 @@ public class MouseController : MonoBehaviour
         if (Input.GetMouseButtonDown(0)) {
             //start making a list of affected tiles.
             dragStartPosition = currentMousePos;
-
+            isDragging = true;
+        } else if (isDragging == false)
+        {
+            dragStartPosition = currentMousePos;
         }
+
+        if (Input.GetMouseButtonDown(1) || Input.GetKey(KeyCode.Escape))
+        {
+            // the RIGHT-hand mouse button was released, 
+            isDragging = false;
+        }
+
+
+        //clean up old placeholders
+        while (dragPlaceholderPreviews.Count > 0)
+        {
+            GameObject go = dragPlaceholderPreviews[0];
+            dragPlaceholderPreviews.RemoveAt(0);
+            SimplePool.Despawn(go);
+        }
+
+        if (!BuildModeController.Instance.IsObjectDraggable())
+        {
+            dragStartPosition = currentMousePos;
+        }
+
+        if (currentMode != MouseMode.BUILD)
+        {
+            return;
+        }
+
+
 
         int start_x =   Mathf.FloorToInt(dragStartPosition.x + 0.5f);
         int end_x =     Mathf.FloorToInt(currentMousePos.x + 0.5f);
@@ -75,31 +139,31 @@ public class MouseController : MonoBehaviour
             start_y = tmp;
         }
 
-        //clean up old [laceholders
-        while (dragPlaceholderPreviews.Count > 0) {
-            GameObject go = dragPlaceholderPreviews[0];
-            dragPlaceholderPreviews.RemoveAt(0);
-            SimplePool.Despawn(go);
-        }
 
         //Is dragging
-        if (Input.GetMouseButton(0)) {
-            //display preview of drag area.
-            for (int x = start_x; x <= end_x; x++) {
-                for (int y = start_y; y <= end_y; y++) {
-                    Tile t = WorldController.Instance.world.GetTileAt(x, y);
-                    if (t != null) {
+        //display preview of drag area.
+        for (int x = start_x; x <= end_x; x++) {
+            for (int y = start_y; y <= end_y; y++) {
+                Tile t = WorldController.Instance.world.GetTileAt(x, y);
+                if (t != null) {
+                    if (BuildModeController.Instance.buildMode == BuildMode.FLOOR || BuildModeController.Instance.buildMode == BuildMode.DECONSTRUCT)
+                    {
                         GameObject go = SimplePool.Spawn(circleCursorPrefab, new Vector3(x, y, 0), Quaternion.identity);
                         go.transform.parent = this.transform;
                         dragPlaceholderPreviews.Add(go);
+                    } else
+                    {
+                        ShowFurnitureSpriteAtCoordinate(BuildModeController.Instance.objectBuildType, t);
                     }
                 }
             }
         }
+        
 
         //end dragging
-        if (Input.GetMouseButtonUp(0)) {
+        if (isDragging && Input.GetMouseButtonUp(0)) {
 
+            isDragging = false;
 
             for (int x = start_x; x <= end_x; x++) {
                 for (int y = start_y; y <= end_y; y++) {
@@ -109,8 +173,35 @@ public class MouseController : MonoBehaviour
                     }
                 }
             }
-        }
+        } 
     }
+
+
+    void ShowFurnitureSpriteAtCoordinate(string furnitureType, Tile t)
+    {
+        GameObject go = new GameObject();
+        go.transform.SetParent(this.transform, true);
+        dragPlaceholderPreviews.Add(go);
+        
+  
+        SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = ResourceLoader.GetFurnitureSprite(furnitureType);
+        sr.sortingLayerName = "Jobs";
+
+        if (WorldController.Instance.world.IsFurniturePlacementValid(furnitureType, t))
+        {
+            sr.color = new Color(0.8f, 1f, 0.8f, 0.4f);
+        }
+        else
+        {
+            sr.color = new Color(1f, 0.5f, 0.8f, 0.4f);
+        }
+
+        Furniture proto = t.world.furnitureProto[furnitureType];
+        go.transform.position = new Vector3(t.X + ((proto.Width - 1) / 2f), t.Y + (proto.Height - 1) / 2f, 0);
+
+    }
+
 
     private void UpdateCameraMovement(Vector3 currentMousePos) {
         //screen dragging
@@ -123,5 +214,11 @@ public class MouseController : MonoBehaviour
         Camera.main.orthographicSize -= Camera.main.orthographicSize * Input.GetAxis("Mouse ScrollWheel");
 
         Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize, 1, 25);
+    }
+
+
+    public void StartBuildMode()
+    {
+        currentMode = MouseMode.BUILD;
     }
 }

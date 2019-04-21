@@ -22,12 +22,12 @@ public class World : IXmlSerializable
 
     public PathTileGraph tileGraph;
 
-    Dictionary<string, Furniture> furnitureProto;
+    public Dictionary<string, Furniture> furnitureProto;
     public Dictionary<string, Job> furnitureJobPrototypes;
     private Action<Furniture> cbInstalledObjectCreated;
     private Action<Tile> cbTileChanged;
     private Action<Character> cbCharacterCreated;
-    private Action<Inventory> cbInventoryCreated;
+    //private Action<Inventory> cbInventoryCreated;
 
     public JobQueue jobQueue;
 
@@ -36,12 +36,17 @@ public class World : IXmlSerializable
 
     public World(int width, int height) {
         SetupWorld(width, height);
+        Tile t;
         if (characters.Count < 1) {
-            Tile t = tiles[Width / 2, Height / 2];
+            t = tiles[Width / 2, Height / 2];
             CreateCharacter(t);
         }
         // make one character
         //Character c = CreateCharacter(GetTileAt(Width / 2, Height / 2));
+
+
+        t = tiles[Width / 2 + 1, Height / 2 + 1];
+        //inventoryManager.PlaceInventory(t, new Inventory());
     }
 
 
@@ -54,7 +59,7 @@ public class World : IXmlSerializable
         inventoryManager = new InventoryManager();
 
         rooms = new List<Room>();
-        rooms.Add(new Room()); 
+        rooms.Add(new Room(this)); 
         Width = w;
         Height = h;
 
@@ -71,8 +76,8 @@ public class World : IXmlSerializable
         Debug.Log("world created with " + (Width * Height) + " tiles.");
 
         CreateFurniturePrototypes();
-      
-        
+
+
     }
 
     public void DeleteRoom( Room r) {
@@ -117,19 +122,75 @@ public class World : IXmlSerializable
         furnitureProto = new Dictionary<string, Furniture>();
         furnitureJobPrototypes = new Dictionary<string, Job>();
         
-        furnitureProto.Add("wall", new Furniture("wall", 0f, true, 1, 1,true));
+        furnitureProto.Add("wall", new Furniture("wall", 0f, 1, 1, true, true));
         furnitureJobPrototypes.Add("wall", 
-            new Job(null, "wall", FurnitureActions.JobComplete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) })
+            new Job(null, "wall", 
+            FurnitureActions.JobComplete_FurnitureBuilding, 
+            //null,
+            1f, 
+            new Inventory[] { new Inventory("steel plate", 5, 0) })
             );
 
 
-        furnitureProto.Add("door", new Furniture("door", 1.5f, true, 1, 1, false));
+
+        furnitureProto.Add("door", new Furniture("door", 1.5f, 1, 1, false, true));
 
         furnitureProto["door"].furnParameters["openness"] = 0;
         furnitureProto["door"].furnParameters["is_opening"] = 0;
         furnitureProto["door"].updateActions += FurnitureActions.Door_UpdateAction;
 
         furnitureProto["door"].IsEnterable = FurnitureActions.Door_IsEnterable;
+
+        furnitureJobPrototypes.Add("door",
+             new Job(null, "door", 
+             FurnitureActions.JobComplete_FurnitureBuilding, 
+             //null,
+             1f, 
+             new Inventory[] { new Inventory("steel plate", 5, 0)
+             })
+             );
+        
+
+        furnitureProto.Add("oxygen generator", new Furniture("oxygen generator", 
+            10f, 
+            2, 
+            2, 
+            false, 
+            false));
+
+        furnitureProto["oxygen generator"].updateActions += FurnitureActions.OxygenGenerator_UpdateAction;
+
+        furnitureJobPrototypes.Add("oxygen generator",
+             new Job(null, "oxygen generator",
+             FurnitureActions.JobComplete_FurnitureBuilding,
+             //null,
+             1f,
+           
+             new Inventory[] { new Inventory()
+             })
+             );
+
+
+        furnitureProto.Add("stockpile", 
+            new Furniture(
+                "stockpile", 
+                0f, 
+                1, 
+                1, 
+                true,
+                false));
+
+        furnitureProto["stockpile"].updateActions += FurnitureActions.Stockpile_UpdateAction;
+        furnitureProto["stockpile"].movementCost = 1f;
+        furnitureProto["stockpile"].tint = Color.blue;
+
+        furnitureJobPrototypes.Add("stockpile",
+            new Job(null, "stockpile", 
+            FurnitureActions.JobComplete_FurnitureBuilding,
+            //null,
+            -1f, 
+            null)
+            );
 
     }
 
@@ -181,7 +242,7 @@ public class World : IXmlSerializable
             for (int y = b-5; y < b+15; y++) {
                 tiles[x, y].Type = TileType.Floor;
 
-                if (x== 1 || x == (l+9) || y == b || y == (b + 9)) {
+                if (x== 1 || x == (l+9) || y == 1 || y == b || y == (b + 9)) {
                     if(x != (l + 9) && y != (b + 4)) {
                         PlaceFurniture("wall", tiles[x,y]);
                     }
@@ -189,6 +250,7 @@ public class World : IXmlSerializable
             }
 
         }
+        
     }
 
 
@@ -221,6 +283,7 @@ public class World : IXmlSerializable
            // Debug.LogError("PlaceInstalledObject - failed to place object");
             return null;
         }
+        furniture.RegisterOnRemovedCallback(OnFurnitureRemoved);
         furnitures.Add(furniture);
 
 
@@ -234,12 +297,42 @@ public class World : IXmlSerializable
             //do we need to recalculate rooms?
             if (furniture.roomEnclosing) {
                 //do flood fill for rooms!
-                Room.ReallocateRooms(furniture);
+                Room.ReallocateRooms(furniture.tile);
             }
         }
 
         return furniture;
     }
+
+
+
+    public void PlaceInventory()
+    {
+        //return 
+        PlaceInventory(tiles[50, 50], new Inventory("steel plate", 50, 10));
+    }
+
+    public bool PlaceInventory(Tile tile, Inventory inventory)
+    {
+
+        if (inventoryManager.PlaceInventory(tile, inventory)) {
+            //cbInventoryCreated(inventory);
+            return true;
+        }
+        else
+            return false;
+    }
+    public bool PlaceInventory(Job job, Inventory inventory)
+    {
+
+        if (inventoryManager.PlaceInventory(job, inventory)) {
+            //cbInventoryCreated(inventory);
+            return true;
+        }else 
+            return false;
+    }
+
+
 
     public void RegisterFurnitureCreated(Action<Furniture> callbackFunc) {
         cbInstalledObjectCreated += callbackFunc;
@@ -263,14 +356,13 @@ public class World : IXmlSerializable
     public void UnregisterTileChanged(Action<Tile> onTileChanged) {
         cbTileChanged -= onTileChanged;
     }
-
-    public void RegisterInventoryCreated(Action<Inventory> callbackfunc) {
-        cbInventoryCreated += callbackfunc;
+    
+    public void OnFurnitureRemoved(Furniture furn)
+    {
+        furn.UnregisterOnRemovedCallback(OnFurnitureRemoved);
+        furnitures.Remove(furn);
     }
 
-    public void UnregisterInventoryCreated(Action<Inventory> callbackfunc) {
-        cbInventoryCreated -= callbackfunc;
-    }
     private void OnTileChanged(Tile tile) {
         if (cbTileChanged == null) {
             return;
@@ -374,34 +466,34 @@ public class World : IXmlSerializable
         InvalidateTileGraph();
 
 
-        // DEBUGGING ONLY!  REMOVE ME LATER!
-        // Create an Inventory Item
-        Inventory inv = new Inventory();
-        inv.stackSize = 10;
-        Tile t = GetTileAt(Width / 2, Height / 2);
-        inventoryManager.PlaceInventory(t, inv);
-        inv.tile = t;
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //// DEBUGGING ONLY!  REMOVE ME LATER!
+        //// Create an Inventory Item
+        //Inventory inv = new Inventory();
+        //inv.stackSize = 10;
+        //Tile t = GetTileAt(Width / 2, Height / 2);
+        //inventoryManager.PlaceInventory(t, inv);
+        //inv.tile = t;
+        ////if (cbInventoryCreated != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
 
-        inv = new Inventory();
-        inv.stackSize = 18;
-        t = GetTileAt(Width / 2 + 2, Height / 2);
-        inventoryManager.PlaceInventory(t, inv);
-        inv.tile = t;
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //inv = new Inventory();
+        //inv.stackSize = 18;
+        //t = GetTileAt(Width / 2 + 2, Height / 2);
+        //inventoryManager.PlaceInventory(t, inv);
+        //inv.tile = t;
+        ////if (inventoryManager != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
 
-        inv = new Inventory();
-        inv.stackSize = 45;
-        t = GetTileAt(Width / 2 + 1, Height / 2 + 2);
-        inv.tile = t;
-        inventoryManager.PlaceInventory(t, inv);
-        if (cbInventoryCreated != null) {
-            cbInventoryCreated(t.inventory);
-        }
+        //inv = new Inventory();
+        //inv.stackSize = 45;
+        //t = GetTileAt(Width / 2 + 1, Height / 2 + 2);
+        //inv.tile = t;
+        //inventoryManager.PlaceInventory(t, inv);
+        ////if (cbInventoryCreated != null) {
+        ////    cbInventoryCreated(t.inventory);
+        ////}
     }
 
 

@@ -51,9 +51,13 @@ public class CharacterSpriteController : MonoBehaviour {
 
     void OnCharacterChanged(Character character) {
         if ( ! characterGameObjectMap.ContainsKey(character)) {
-            Debug.LogError("OnFurnitureChanged - trie dto change visuals for something not in the map!");
+            Debug.LogError("OnCharacterChanged - tried to change visuals for something not in the map!");
             return;
         }
+        if (character == null) {
+            Debug.LogError("CharacterSpriteCOntroller:- Character is null - NOW FIND OUT WHY");
+        }
+
         GameObject char_go = characterGameObjectMap[character];
         char_go.transform.position = new Vector3(character.x, character.y, 0);
     }

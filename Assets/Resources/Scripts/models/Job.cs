@@ -4,22 +4,47 @@ using System;
 
 public class Job{
 
-
+    static int totalJobNum = 0;
+    public int jobNum;
     public Tile tile;
-    float jobTime;
+    public float JobTime
+    {
+        get;
+        protected set;
+    }
 
     //Action<T> cbJob;
     Action<Job> cbJobComplete;
+    Action<Job> cbJobWorked;
     Action<Job> cbJobCancel;
-    public Dictionary<string, Inventory> inventoryRequirements;    
+    public Dictionary<string, Inventory> inventoryRequirements;
 
-    public string theFurniture { get; protected set;  }
+    public int proximityToComplete = 1; //how close should a character be to complete 0 - on tile, 1 adjacent tile.
+    public bool acceptsAnyInventoryItem;
 
-    public Job (Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] inventoryRequirements) {
+    public string jobObjectType { get; protected set;  }
+
+    public Furniture furniturePrototype;
+
+    public bool canTakeFromStockpile = true;
+
+    public int timesQueued = 0;
+
+    public Job (Tile tile, 
+            string jobObjectType, 
+            Action<Job> cbJobComplete,
+            //Action<Job> cbJobWorked,
+            float jobTime, 
+            Inventory[] inventoryRequirements,
+            bool canTakeFromStockpile=true
+        )
+    {
         this.tile = tile;
         this.cbJobComplete += cbJobComplete;
-        this.jobTime = jobTime;
-        this.theFurniture = jobObjectType;
+        //this.cbJobWorked += cbJobWorked;
+        this.JobTime = jobTime;
+        this.jobObjectType = jobObjectType;
+        this.canTakeFromStockpile = canTakeFromStockpile;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (inventoryRequirements != null) {
@@ -32,16 +57,16 @@ public class Job{
         //inv.maxStackSize = 5; //num required to complete job
         //inventoryRequirements["Steel Plate"] = inv;
 
-
-
+        jobNum = totalJobNum;
+        totalJobNum++;
     }
 
     protected Job(Job job) {
         this.tile = job.tile;
         
         this.cbJobComplete += job.cbJobComplete;
-        this.jobTime = job.jobTime;
-        this.theFurniture = job.theFurniture;
+        this.JobTime = job.JobTime;
+        this.jobObjectType = job.jobObjectType;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (job.inventoryRequirements != null) {
@@ -49,11 +74,19 @@ public class Job{
                 this.inventoryRequirements[inv.objectType] = inv.Clone();
             }
         }
+        jobNum = totalJobNum;
+        totalJobNum++;
     }
 
     virtual public Job Clone() {
         return new Job(this);
     }
+
+    public override string ToString()
+    {
+        return "Job " + jobNum + " :-   type:" + jobObjectType + "\ttime:"+JobTime + "\tqueued:"+timesQueued + "\nStuff needed:-" + inventoryRequirements;
+    }
+
 
     public void RegisterJobCompleteCallback(Action<Job> cb) {
         cbJobComplete += cb;
@@ -63,19 +96,45 @@ public class Job{
         cbJobComplete -= cb;
     }
 
-    public void RegisterJobCancelCallback(Action<Job> cb) {
+    public void RegisterJobCancelCallback(Action<Job> cb)
+    {
         cbJobCancel += cb;
     }
 
-
-    public void UnregisterJobCancelCallback(Action<Job> cb) {
+    public void UnregisterJobCancelCallback(Action<Job> cb)
+    {
         cbJobCancel -= cb;
     }
 
-    public void DoWork(float workTime) {
-        jobTime -= workTime;
+    public void RegisterJobWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked += cb;
+    }
 
-        if (jobTime <= 0) {
+
+    public void UnregisterJobWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked -= cb;
+    }
+
+    public void DoWork(float workTime) {
+
+        if (HasAllMaterials() == false) {
+            // if we've tried to do work on a job that doesnt have all materials.
+            // it's probably an insta-completable one!
+            if (cbJobWorked != null)
+                cbJobWorked(this);
+            return;
+        }
+
+
+        JobTime -= workTime;
+
+        if (cbJobWorked != null) {
+            cbJobWorked(this);
+        }
+
+        if (JobTime <= 0) {
             if(cbJobComplete != null) 
                 cbJobComplete(this);
         }
@@ -84,6 +143,9 @@ public class Job{
     public void CancelJob() {
         if (cbJobCancel != null)
             cbJobCancel(this);
+
+        if (tile.world.jobQueue.HasJob(this))
+            tile.world.jobQueue.Remove(this);
     }
 
     public bool HasAllMaterials() {
@@ -97,18 +159,38 @@ public class Job{
     }
 
 
-    public bool DesiresInventoryType(Inventory inv) {
+    public int DesiresInventory(Inventory inv)
+    {
+        if (inv == null)
+            return 0;
+        if (acceptsAnyInventoryItem) {
+            return inv.maxStackSize;
+        }
+
         if (inventoryRequirements.ContainsKey(inv.objectType) == false) {
-            return false;
+            return 0;
         }
 
         if (inventoryRequirements[inv.objectType].stackSize >= inventoryRequirements[inv.objectType].maxStackSize) {
-            return false;
+            return 0;
         }
-
-        //if we're here we have enough fo this type of materials.
-        return true;
+         
+        //returns the amount still wanted of this particular inventory type.
+        return inventoryRequirements[inv.objectType].maxStackSize - inventoryRequirements[inv.objectType].stackSize;
 
     }
 
+    public Inventory GetFirstDesiredInventory()
+    {
+        foreach (Inventory inv in inventoryRequirements.Values) {
+            if(inv.stackSize < inv.maxStackSize) {
+                return inv;
+            }
+        }
+
+        return null;
+    }
+
+
+   
 }

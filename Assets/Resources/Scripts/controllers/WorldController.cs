@@ -52,11 +52,27 @@ public class WorldController : MonoBehaviour
 
     }
 
-    public void MakePathTest()
+
+    public void PlaceInventory()
     {
+        //FIXME: Just for testung places 10 steel plate at 50,50.
+       PlaceInventory(GetTileAtWorldCoord(new Vector3(50, 50, 0)), new Inventory("steel plate", 50, 7));
+    }
+
+    public bool PlaceInventory(Tile tile, Inventory inventory)
+    {
+        return world.PlaceInventory(tile, inventory);
+    }
+    public bool PlaceInventory(Job job, Inventory inventory)
+    {
+        return world.PlaceInventory(job, inventory);
+    }
+
+    public void MakePathTest() {
         world.SetupPathFindingTest();
 
         PathTileGraph tileGraph = new PathTileGraph(world);
+        PlaceInventory();
     }
 
 

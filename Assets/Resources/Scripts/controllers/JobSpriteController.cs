@@ -16,23 +16,28 @@ public class JobSpriteController : MonoBehaviour {
 	}
 	void OnJobCreated(Job j) {
 
-        if (jobGameObjectMap.ContainsKey(j)) {
-            Debug.Log("OnJObCreated for a job sprite that already exists. Most likely caused by requeueing");
+        if(j.jobObjectType == null || j.jobObjectType.Equals("")) {
+            //no associated sprite needing to be drawn. No need to render.
             return;
         }
 
-        Sprite sprite = ResourceLoader.GetFurnitureSprite(j.theFurniture);
+        if (jobGameObjectMap.ContainsKey(j)) {
+            Debug.Log("OnJObCreated:- for a job sprite that already exists. Most likely caused by requeueing");
+            return;
+        }
+
+        Sprite sprite = ResourceLoader.GetFurnitureSprite(j.jobObjectType);
 
         GameObject job_go = new GameObject();
 
         jobGameObjectMap.Add(j, job_go);
 
-        job_go.name = j.theFurniture + "_" + j.tile.X + "_" + j.tile.Y;
-        job_go.transform.position = new Vector3(j.tile.X, j.tile.Y, 0);
+        job_go.name = j.jobObjectType + "_" + j.tile.X + "_" + j.tile.Y;
+        job_go.transform.position = new Vector3(j.tile.X + (j.furniturePrototype.Width-1)/2f, j.tile.Y + (j.furniturePrototype.Height-1)/2f, 0);
         job_go.transform.SetParent(this.transform, true);
 
         //FIXME: this is hardcoded - not ideal!!!
-        if (j.theFurniture == "door") {
+        if (j.jobObjectType == "door") {
             //check for e-w or n-s walls.
 
             Tile northTile = j.tile.world.GetTileAt(j.tile.X, j.tile.Y + 1);
@@ -44,7 +49,7 @@ public class JobSpriteController : MonoBehaviour {
             }
         }
         SpriteRenderer sr = job_go.AddComponent<SpriteRenderer>();
-        sr.sprite = ResourceLoader.GetFurnitureSprite(j.theFurniture);
+        sr.sprite = ResourceLoader.GetFurnitureSprite(j.jobObjectType);
         sr.color = new Color(0.8f, 1f, 0.8f, 0.4f);
         sr.sortingLayerName = "Jobs";
 

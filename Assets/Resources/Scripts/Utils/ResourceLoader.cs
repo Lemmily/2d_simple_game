@@ -28,36 +28,37 @@ public class ResourceLoader : MonoBehaviour {
         Sprite[] sprites = Resources.LoadAll<Sprite>("images/furniture");
 
         foreach (Sprite s in sprites) {
-            furnitureSpriteMap.Add(s.name, s);
+            furnitureSpriteMap.Add(s.name.ToLower(), s);
         }
 
         sprites = Resources.LoadAll<Sprite>("images/tiles");
 
         foreach (Sprite s in sprites) {
-            tileSpriteMap.Add(s.name, s);
+            tileSpriteMap.Add(s.name.ToLower(), s);
         }
 
         sprites = Resources.LoadAll<Sprite>("images/items");
 
         foreach (Sprite s in sprites) {
-            itemSpriteMap.Add(s.name, s);
+            itemSpriteMap.Add(s.name.ToLower(), s);
         }
         sprites = Resources.LoadAll<Sprite>("images/inventory");
 
         foreach (Sprite s in sprites) {
-            inventorySpriteMap.Add(s.name, s);
+            inventorySpriteMap.Add(s.name.ToLower(), s);
         }
 
 
         AudioClip[] audioClips = Resources.LoadAll<AudioClip>("sounds");
 
         foreach (AudioClip a in audioClips) {
-            audioClipMap.Add(a.name, a);
+            audioClipMap.Add(a.name.ToLower(), a);
         }
     }
 
 
     public static Sprite GetFurnitureSprite(string name) {
+        name = name.ToLower();
         if (instance.furnitureSpriteMap.ContainsKey(name)) {
             return instance.furnitureSpriteMap[name];
         }
@@ -82,11 +83,19 @@ public class ResourceLoader : MonoBehaviour {
         name = name.ToLower();
         return instance.tileSpriteMap[name];
     }
-    public static Sprite GetItemSprite(string name) {
+    public static Sprite GetItemSprite(string name)
+    {
+        name = name.ToLower();
         return instance.itemSpriteMap[name];
     }
-
-    public static AudioClip GetSound(string name) {
+    public static Sprite GetInventorySprite(string name)
+    {
+        name = name.ToLower();
+        return instance.itemSpriteMap[name];
+    }
+    public static AudioClip GetSound(string name)
+    {
+        name = name.ToLower();
         if (instance.audioClipMap.ContainsKey(name)) 
             return instance.audioClipMap[name];
         return null;

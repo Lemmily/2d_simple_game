@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class MouseOverRoomIndexText : MonoBehaviour {
+public class MouseOverInventoryText : MonoBehaviour {
     private MouseController mouseController;
     Text myText;
 
@@ -23,12 +23,10 @@ public class MouseOverRoomIndexText : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update ()
-    {
+	void Update () {
         Tile t = mouseController.GetMouseOverTile();
-        if (t != null)
-        {
-            myText.text = "Room Index: " + t.world.rooms.IndexOf(t.room);
+        if (t != null) {
+            myText.text = "Inventory: " + t.inventory;
         }
 	}
 }
