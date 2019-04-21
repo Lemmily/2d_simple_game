@@ -242,10 +242,13 @@ public class World : IXmlSerializable
             for (int y = b-5; y < b+15; y++) {
                 tiles[x, y].Type = TileType.Floor;
 
-                if (x== 1 || x == (l+9) || y == 1 || y == b || y == (b + 9)) {
-                    if(x != (l + 9) && y != (b + 4)) {
-                        PlaceFurniture("wall", tiles[x,y]);
+                if (x == 1 || x == (l + 9) || y == 1 || y == b || y == (b + 9)) {
+                    if (x != (l + 9) && y != (b + 4)) {
+                        PlaceFurniture("wall", tiles[x, y]);
                     }
+                }
+                else if (x == 4 && y != 10) {
+                    PlaceFurniture("wall", tiles[x, y]);
                 }
             }
 

@@ -199,27 +199,6 @@ public class Character : IXmlSerializable{
 
     //}
 
-    void OnJobEnded(Job j)
-    {
-        //Job completed or cancelled.
-        if (j != myJob) {
-            Debug.Log("Character being told about job  thats not his. Maybe unregister something?");
-            return;
-        }
-
-        j.UnregisterJobCompleteCallback(OnJobEnded);
-        // j.UnregisterJobWorkedCallback() TODO: for when this is actually assigned.
-        j.UnregisterJobCancelCallback(OnJobEnded);
-
-        myJob = null;
-        //if (inventory != null) {
-        //    currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
-        //    if (inventory != null) {
-        //        Debug.LogError("Trying to get rid of character inventory failed. SMUSHING");
-        //        inventory = null;
-        //    }
-        //}
-    }
 
     public void AbandonJob()
     {
@@ -536,25 +515,28 @@ public class Character : IXmlSerializable{
         cbPathChanged -= cb;
     }
 
-    void OnJobEnded(Job j) {
+    void OnJobEnded(Job j)
+    {
         //Job completed or cancelled.
-        if(j != myJob) {
+        if (j != myJob) {
             Debug.Log("Character being told about job  thats not his. Maybe unregister something?");
             return;
         }
 
-        myJob = null;
+        j.UnregisterJobCompleteCallback(OnJobEnded);
+        // j.UnregisterJobWorkedCallback() TODO: for when this is actually assigned.
+        j.UnregisterJobCancelCallback(OnJobEnded);
 
-        ////if (this.currTile.IsEnterable() == ENTERABILITY.Never)
-        //{
-        //    //find nearest empty tile to go into.
-        //    nextTile = WorldController.Instance.world.GetNearestEmptyTile(currTile);
-        //    if (nextTile == null)
-        //    {
-        //        currTile = WorldController.Instance.world.GetHomeSafeTile();
+        myJob = null;
+        //if (inventory != null) {
+        //    currTile.world.inventoryManager.PlaceInventory(currTile, inventory);
+        //    if (inventory != null) {
+        //        Debug.LogError("Trying to get rid of character inventory failed. SMUSHING");
+        //        inventory = null;
         //    }
         //}
     }
+
 
     public XmlSchema GetSchema()
     {
