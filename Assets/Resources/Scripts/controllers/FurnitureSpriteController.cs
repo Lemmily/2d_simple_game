@@ -10,6 +10,8 @@ public class FurnitureSpriteController : MonoBehaviour
 
     private Dictionary<Furniture, GameObject> furnitureGameObjectMap;
     GameObject all_tiles_go;
+    public GameObject tilesprites;
+    public bool useNew = false;
 
     public World World
     {
@@ -30,6 +32,11 @@ public class FurnitureSpriteController : MonoBehaviour
 
         World.RegisterFurnitureCreated(OnFurnitureCreated);
 
+
+        //GameObject spriteTile = GameObject.Instantiate(tilesprites);
+        //spriteTile.transform.SetParent(this.transform);
+        //spriteTile.GetComponent<TileSprites>().SetTestSprite();
+
         foreach (Furniture furniture in World.furnitures)
         {
             OnFurnitureCreated(furniture);
@@ -37,6 +44,10 @@ public class FurnitureSpriteController : MonoBehaviour
     }
 
     public void OnFurnitureCreated(Furniture furn) {
+
+        if(furn.objectType == "wall") {
+            return;
+        }
 
         GameObject furn_go = new GameObject();
         //GameObject obj_go = installedObjectGameObjectMap[obj];
@@ -109,7 +120,9 @@ public class FurnitureSpriteController : MonoBehaviour
 
     }
 
-    public Sprite GetSpriteForFurniture(Furniture furn) {
+
+    
+    public Sprite GetSpriteForFurniture(Furniture furn) { 
         string spriteName = furn.objectType;
         if (furn.linksToNeighbour == false) {
 
@@ -137,27 +150,27 @@ public class FurnitureSpriteController : MonoBehaviour
         spriteName = furn.objectType + "_";
         string suffix = "";
 
-        if (hasSameTypeNeighbourAt(World.GetTileAt(x , y + 1), furn.objectType)) {
+        if (isSameTypeNeighbourAt(World.GetTileAt(x , y + 1), furn.objectType)) {
             suffix += "n";
         }
-        if (hasSameTypeNeighbourAt(World.GetTileAt(x + 1, y), furn.objectType)) {
-            if(suffix.Contains("n") && hasSameTypeNeighbourAt(World.GetTileAt(x + 1, y + 1), furn.objectType)){ 
+        if (isSameTypeNeighbourAt(World.GetTileAt(x + 1, y), furn.objectType)) {
+            if(suffix.Contains("n") && isSameTypeNeighbourAt(World.GetTileAt(x + 1, y + 1), furn.objectType)){ 
                 suffix += "_";
             }
             suffix += "e";
         }
-        if (hasSameTypeNeighbourAt(World.GetTileAt(x, y - 1), furn.objectType)) {
-            if (suffix.Contains("e") && hasSameTypeNeighbourAt(World.GetTileAt(x + 1, y - 1), furn.objectType)) {
+        if (isSameTypeNeighbourAt(World.GetTileAt(x, y - 1), furn.objectType)) {
+            if (suffix.Contains("e") && isSameTypeNeighbourAt(World.GetTileAt(x + 1, y - 1), furn.objectType)) {
                 suffix += "_";
             }
             suffix += "s";
         }
-        if (hasSameTypeNeighbourAt(World.GetTileAt(x-1, y), furn.objectType)) {
-            if (suffix.Contains("s") && hasSameTypeNeighbourAt(World.GetTileAt(x - 1, y - 1), furn.objectType)) {
+        if (isSameTypeNeighbourAt(World.GetTileAt(x-1, y), furn.objectType)) {
+            if (suffix.Contains("s") && isSameTypeNeighbourAt(World.GetTileAt(x - 1, y - 1), furn.objectType)) {
                 suffix += "_";
             }
             suffix += "w";
-            if (suffix.Contains("n") && hasSameTypeNeighbourAt(World.GetTileAt(x - 1, y + 1), furn.objectType)) {
+            if (suffix.Contains("n") && isSameTypeNeighbourAt(World.GetTileAt(x - 1, y + 1), furn.objectType)) {
                 suffix += "_";
             }
         }
@@ -195,7 +208,57 @@ public class FurnitureSpriteController : MonoBehaviour
 
     }
 
-    private bool hasSameTypeNeighbourAt(Tile t, string objectType)
+
+
+    public Sprite GetSpriteForFurniture_New(Furniture furn)
+    {
+        string spriteName = furn.objectType;
+        if (furn.linksToNeighbour == false) {
+            if (furn.objectType == "door") {
+                if (furn.furnParameters["openness"] < 0.1f) {
+                    spriteName = "door";
+                }
+                else if (furn.furnParameters["openness"] < 0.5f) {
+                    spriteName = "door_openness_1";
+                }
+                else if (furn.furnParameters["openness"] < 0.9f) {
+                    spriteName = "door_openness_2";
+                }
+                else {
+                    spriteName = "door_openness_3";
+                }
+            }
+            return ResourceLoader.instance.furnitureSpriteMap[spriteName];
+        }
+
+        int x = furn.tile.X;
+        int y = furn.tile.Y;
+
+        if (furn.objectType == "wall") {
+            //hack to use new images.
+            spriteName = "walls_";
+        } else {
+            spriteName = furn.objectType + "_";
+        }
+        string suffix = "";
+
+
+        isSameTypeNeighbourAt(World.GetTileAt(x + 1, y), furn.objectType);
+
+
+
+        try {
+            return ResourceLoader.instance.furnitureSpriteMap[spriteName + suffix];
+        }
+        catch (KeyNotFoundException ex) {
+            Debug.Log(ex.Data);
+            return null;
+
+        }
+
+    }
+
+    private bool isSameTypeNeighbourAt(Tile t, string objectType)
     {
         if (t?.furniture?.objectType == objectType) {
             return true;
