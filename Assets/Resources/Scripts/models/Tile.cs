@@ -185,7 +185,8 @@ public class Tile : IXmlSerializable{
             }
 
             if (inventory.stackSize + other_inv.stackSize > inventory.maxStackSize) {
-                Debug.LogError("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
+                Debug.LogWarning("Trying to add too many items to inventory! Squeezing as much as i can onto the tile and keeping hold of the rest.");
+                //could spill to next tile at end?
                 int total = inventory.stackSize + other_inv.stackSize;
                 int dif = total - inventory.maxStackSize;
                 

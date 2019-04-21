@@ -63,6 +63,11 @@ public class MouseController : MonoBehaviour
             }
         }
 
+        if(Input.GetKeyUp(KeyCode.Mouse1) || Input.GetKeyUp(KeyCode.Q)) {
+            if(currentMode == MouseMode.BUILD) {
+                currentMode = MouseMode.SELECT;
+            }
+        }
 
         Tile tileUnderMouse = WorldController.Instance.GetTileAtWorldCoord(currentMousePos);
 

@@ -137,36 +137,35 @@ public class Furniture : IXmlSerializable
         if (!tile.InstallFurniture(obj)) {
             //we couldn't place the object here. Probs already occupied
 
-
             return null;
         }
 
         if (obj.linksToNeighbour) {
             int x = tile.X;
             int y = tile.Y;
-            Tile t = tile.world.GetTileAt(x, y + 1);
 
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x + 1, y);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x, y - 1);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
-            t = tile.world.GetTileAt(x - 1, y);
-            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType) {
-                t.furniture.cbOnChanged(t.furniture);
-            }
+            //Orthogonals
+            TriggerOnChanged(tile.world.GetTileAt(x, y + 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y), obj.objectType);
 
+            //Diagonals
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y + 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x + 1, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y - 1), obj.objectType);
+            TriggerOnChanged(tile.world.GetTileAt(x - 1, y + 1), obj.objectType);
         }
 
         return obj;
     }
 
+    public static void TriggerOnChanged(Tile t, string objectType)
+    {
+        if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == objectType) {
+            t.furniture.cbOnChanged(t.furniture);
+        }
+    }
 
     public void RegisterOnChangedCallback(Action<Furniture> callbackFunc)
     {
@@ -215,7 +214,7 @@ public class Furniture : IXmlSerializable
     }
 
     public bool IsValidPosition_Door(int x, int y) {
-        //check for e-w wall or n-s wall.
+        //TODO check for an e-w wall or n-s wall.
         return true;
     }
 

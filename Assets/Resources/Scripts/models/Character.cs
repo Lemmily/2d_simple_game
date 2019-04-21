@@ -143,6 +143,10 @@ public class Character : IXmlSerializable{
             if (cbPathChanged != null)
                 cbPathChanged(path.path);
         }
+        else if (currTile == destTile) {
+            //we're there! but do i need to do anything?
+            Debug.Log("On the tile!");
+        }
     }
 
     //private void Update_DoMovement(float deltaTime) {

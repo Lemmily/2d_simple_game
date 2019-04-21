@@ -36,7 +36,7 @@ public class InventoryManager  {
             // inv.job = null;
             //}
         } else if (inv.stackSize == 0) {
-            Debug.Log("InventoryManager:- Have an inventory that I didn't know about! What do?");
+            Debug.LogWarning("InventoryManager:- Have an inventory that I didn't know about! What do?");
         }
         
         inv.UnregisterInventoryChanged(InventorySpriteController.Instance.OnInventoryChanged);
@@ -69,7 +69,7 @@ public class InventoryManager  {
         int inv_orig_stackSize = inv.stackSize;
         if ( ! tile.PlaceInventory(inv) ) {
             //the tile rejected the inventory.
-            Debug.Log("Inventory Manager:- Tried & failed to placed inventory:-" + inv + " on tile :- " + tile);
+            Debug.LogWarning("Inventory Manager:- Tried & failed to placed inventory:-" + inv + " on tile :- " + tile);
             return false;
         }
         
